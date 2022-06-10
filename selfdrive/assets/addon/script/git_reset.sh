@@ -9,6 +9,7 @@ cd /data/openpilot
 ping -q -c 1 -w 1 google.com &> /dev/null
 if [ "$?" == "0" ]; then
   CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+  /data/data/com.termux/files/usr/bin/git clean -d -f -f
   /data/data/com.termux/files/usr/bin/git fetch --all
   /data/data/com.termux/files/usr/bin/git reset --hard origin/$CURRENT_BRANCH
   /data/data/com.termux/files/usr/bin/git pull
