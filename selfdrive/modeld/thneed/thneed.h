@@ -94,7 +94,6 @@ class Thneed {
     void execute(float **finputs, float *foutput, bool slow=false);
     void wait();
     int optimize();
-    bool run_optimizer = false;
 
     vector<cl_mem> input_clmem;
     vector<void *> inputs;
@@ -107,7 +106,7 @@ class Thneed {
     int context_id;
 
     // protected?
-    bool record = false;
+    bool record;
     int debug;
     int timestamp;
     unique_ptr<GPUMalloc> ram;

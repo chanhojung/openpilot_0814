@@ -11,6 +11,7 @@ public:
   void addRecurrent(float *state, int state_size);
   void addDesire(float *state, int state_size);
   void addTrafficConvention(float *state, int state_size);
+  void addCalib(float *state, int state_size);
   void addImage(float *image_buf, int buf_size);
   void addExtra(float *image_buf, int buf_size);
   void execute();

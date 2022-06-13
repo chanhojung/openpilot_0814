@@ -123,12 +123,6 @@ SNPEModel::SNPEModel(const char *path, float *loutput, size_t loutput_size, int 
     outputBuffer = ubFactory.createUserBuffer(output, output_size * sizeof(float), outputStrides, &userBufferEncodingFloat);
     outputMap.add(output_tensor_name, outputBuffer.get());
   }
-
-#ifdef USE_THNEED
-  if (Runtime == zdl::DlSystem::Runtime_t::GPU) {
-    thneed.reset(new Thneed());
-  }
-#endif
 }
 
 void SNPEModel::addRecurrent(float *state, int state_size) {
@@ -145,6 +139,11 @@ void SNPEModel::addTrafficConvention(float *state, int state_size) {
 void SNPEModel::addDesire(float *state, int state_size) {
   desire = state;
   desireBuffer = this->addExtra(state, state_size, 1);
+}
+
+void SNPEModel::addCalib(float *state, int state_size) {
+  calib = state;
+  calibBuffer = this->addExtra(state, state_size, 1);
 }
 
 void SNPEModel::addImage(float *image_buf, int buf_size) {
@@ -177,7 +176,7 @@ std::unique_ptr<zdl::DlSystem::IUserBuffer> SNPEModel::addExtra(float *state, in
 void SNPEModel::execute() {
 #ifdef USE_THNEED
   if (Runtime == zdl::DlSystem::Runtime_t::GPU) {
-    if (!thneed_recorded) {
+    if (thneed == NULL) {
       bool ret = inputBuffer->setBufferAddress(input);
       assert(ret == true);
       if (use_extra) {
@@ -189,7 +188,7 @@ void SNPEModel::execute() {
         PrintErrorStringAndExit();
       }
       memset(recurrent, 0, recurrent_size*sizeof(float));
-      thneed->record = true;
+      thneed = new Thneed();
       if (!snpe->execute(inputMap, outputMap)) {
         PrintErrorStringAndExit();
       }
@@ -221,7 +220,6 @@ void SNPEModel::execute() {
         assert(false);
       }
       free(outputs_golden);
-      thneed_recorded = true;
     } else {
       if (use_extra) {
         float *inputs[5] = {recurrent, trafficConvention, desire, extra, input};

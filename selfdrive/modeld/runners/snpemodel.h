@@ -1,5 +1,4 @@
 #pragma once
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 
 #include <DlContainer/IDlContainer.hpp>
 #include <DlSystem/DlError.hpp>
@@ -26,14 +25,14 @@ public:
   SNPEModel(const char *path, float *loutput, size_t loutput_size, int runtime, bool luse_extra = false);
   void addRecurrent(float *state, int state_size);
   void addTrafficConvention(float *state, int state_size);
+  void addCalib(float *state, int state_size);
   void addDesire(float *state, int state_size);
   void addImage(float *image_buf, int buf_size);
   void addExtra(float *image_buf, int buf_size);
   void execute();
 
 #ifdef USE_THNEED
-  std::unique_ptr<Thneed> thneed;
-  bool thneed_recorded = false;
+  Thneed *thneed = NULL;
 #endif
 
 private:
@@ -73,4 +72,6 @@ private:
   std::unique_ptr<zdl::DlSystem::IUserBuffer> trafficConventionBuffer;
   float *desire;
   std::unique_ptr<zdl::DlSystem::IUserBuffer> desireBuffer;
+  float *calib;
+  std::unique_ptr<zdl::DlSystem::IUserBuffer> calibBuffer;
 };

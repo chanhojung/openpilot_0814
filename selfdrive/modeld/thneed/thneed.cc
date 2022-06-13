@@ -11,6 +11,8 @@
 
 #include "selfdrive/common/clutil.h"
 #include "selfdrive/common/timing.h"
+//#define RUN_DISASSEMBLER
+#define RUN_OPTIMIZER
 
 Thneed *g_thneed = NULL;
 int g_fd = -1;
@@ -201,6 +203,11 @@ void CachedCommand::exec() {
     for (auto &it : kq) {
       it->debug_print(false);
     }
+    #ifdef RUN_DISASSEMBLER
+      // assuming 2 commands
+      disassemble(0);
+      disassemble(1);
+    #endif
   }
 
   assert(ret == 0);
@@ -213,6 +220,7 @@ Thneed::Thneed(bool do_clinit) {
   assert(g_fd != -1);
   fd = g_fd;
   ram = make_unique<GPUMalloc>(0x80000, fd);
+  record = true;
   timestamp = -1;
   g_thneed = this;
   char *thneed_debug_env = getenv("THNEED_DEBUG");
@@ -222,7 +230,7 @@ Thneed::Thneed(bool do_clinit) {
 void Thneed::stop() {
   find_inputs_outputs();
   printf("Thneed::stop: recorded %lu commands\n", cmds.size());
-  record = false;
+  record = 0;
 }
 
 void Thneed::find_inputs_outputs() {
@@ -408,7 +416,9 @@ cl_int thneed_clFinish(cl_command_queue command_queue) {
   Thneed *thneed = g_thneed;
 
   if (thneed != NULL && thneed->record) {
-    if (thneed->run_optimizer) thneed->optimize();
+    #ifdef RUN_OPTIMIZER
+      thneed->optimize();
+    #endif
     return thneed->clexec();
   } else {
     return clFinish(command_queue);
