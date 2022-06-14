@@ -100,6 +100,11 @@ void ONNXModel::addTrafficConvention(float *state, int state_size) {
   traffic_convention_size = state_size;
 }
 
+void ONNXModel::addCalib(float *state, int state_size) {
+  calib_input_buf = state;
+  calib_size = state_size;
+}
+
 void ONNXModel::addImage(float *image_buf, int buf_size) {
   image_input_buf = image_buf;
   image_buf_size = buf_size;

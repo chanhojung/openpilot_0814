@@ -165,7 +165,7 @@ void HomeWindow::mousePressLQR(QMouseEvent* e, int nDir) {
 
   if (nMenuPos == 0) {
     QUIState::ui_state.scene.lqrScale += 50*nDir;
-    clip(QUIState::ui_state.scene.lqrScale, 1, 50);
+    clip(QUIState::ui_state.scene.lqrScale, 50, 5000);
     QString value = QString::number(QUIState::ui_state.scene.lqrScale);
     Params().put("Scale", value.toStdString());
   } else if (nMenuPos == 1) {
