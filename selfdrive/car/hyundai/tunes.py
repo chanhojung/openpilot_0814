@@ -58,12 +58,14 @@ def set_lat_tune(tune, name, max_lat_accel=2.5, FRICTION=.1):
     TorqueFriction = float(Decimal(params.get("TorqueFriction", encoding="utf8")) * Decimal('0.001'))
     TorqueUseAngle = params.get_bool('TorqueUseAngle')
     max_lat_accel = float(Decimal(params.get("TorqueMaxLatAccel", encoding="utf8")) * Decimal('0.1'))
+    steer_ang_deadzone = float(Decimal(params.get("TorqueAngDeadZone", encoding="utf8")) * Decimal('0.1'))
 
     tune.atom.torque.useSteeringAngle = TorqueUseAngle  #  False
     tune.atom.torque.kp = TorqueKp / max_lat_accel        # 2.0 / 2.5 = 0.8
     tune.atom.torque.kf = TorqueKf / max_lat_accel        # 1.0 / 2.5 = 0.4
     tune.atom.torque.ki = TorqueKi / max_lat_accel        # 0.5 / 2.5 = 0.2
     tune.atom.torque.friction = TorqueFriction
+    tune.atom.torque.steeringAngleDeadzoneDeg = steer_ang_deadzone
 
     # 2. LQR
     Scale = float(Decimal(params.get("Scale", encoding="utf8")) * Decimal('1.0'))
@@ -115,12 +117,14 @@ def set_lat_tune(tune, name, max_lat_accel=2.5, FRICTION=.1):
     TorqueFriction = float(Decimal(params.get("TorqueFriction", encoding="utf8")) * Decimal('0.001'))
     TorqueUseAngle = params.get_bool('TorqueUseAngle')
     max_lat_accel = float(Decimal(params.get("TorqueMaxLatAccel", encoding="utf8")) * Decimal('0.1'))
+    steer_ang_deadzone = float(Decimal(params.get("TorqueAngDeadZone", encoding="utf8")) * Decimal('0.1'))
     tune.init('torque')
     tune.torque.useSteeringAngle = TorqueUseAngle
     tune.torque.kp = TorqueKp / max_lat_accel # 2.0/2.5 = 0.8
     tune.torque.kf = TorqueKf / max_lat_accel # 1.0/2.5 = 0.4
     tune.torque.ki = TorqueKi / max_lat_accel # 0.5/2.5 = 0.2
     tune.torque.friction = TorqueFriction
+    tune.torque.steeringAngleDeadzoneDeg = steer_ang_deadzone
   elif name == LatTunes.LQR:
     Scale = float(Decimal(params.get("Scale", encoding="utf8")) * Decimal('1.0'))
     LqrKi = float(Decimal(params.get("LqrKi", encoding="utf8")) * Decimal('0.001'))

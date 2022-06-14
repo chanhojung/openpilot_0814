@@ -356,8 +356,8 @@ class NaviControl():
         if self.cut_in_run_timer and dRel < CS.clu_Vanz * 0.36: # keep decel when cut_in, max running time 10sec
           var_speed = min(CS.CP.vFutureA, navi_speed)
         elif vRel >= (-3 if CS.is_set_speed_in_mph else -5):
-          var_speed = min(CS.CP.vFuture + max(0, int(dRel*(0.1 if CS.is_set_speed_in_mph else 0.15)+vRel)), navi_speed)
-          ttime = 100 if CS.is_set_speed_in_mph else 70
+          var_speed = min(CS.CP.vFuture + max(0, int(dRel*(0.11 if CS.is_set_speed_in_mph else 0.16)+vRel)), navi_speed)
+          ttime = 70 if CS.is_set_speed_in_mph else 40
           self.t_interval = int(interp(dRel, [15, 50], [7, ttime])) if not (self.onSpeedControl or self.curvSpeedControl or self.cut_in) else 7
         else:
           var_speed = min(CS.CP.vFuture, navi_speed)
@@ -369,7 +369,7 @@ class NaviControl():
       else:
         self.faststart = False
         var_speed = navi_speed
-        ttime = 70 if CS.is_set_speed_in_mph else 50
+        ttime = 70 if CS.is_set_speed_in_mph else 40
         self.t_interval = ttime if not (self.onSpeedControl or self.curvSpeedControl or self.cut_in) else 7
     else:
       var_speed = navi_speed

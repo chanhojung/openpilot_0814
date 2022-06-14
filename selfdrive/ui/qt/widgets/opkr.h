@@ -1552,6 +1552,21 @@ private:
   void refresh();
 };
 
+class TorqueAngDeadZone : public AbstractControl {
+  Q_OBJECT
+
+public:
+  TorqueAngDeadZone();
+
+private:
+  QPushButton btnplus;
+  QPushButton btnminus;
+  QLabel label;
+  Params params;
+  
+  void refresh();
+};
+
 class SteerAngleCorrection : public AbstractControl {
   Q_OBJECT
 

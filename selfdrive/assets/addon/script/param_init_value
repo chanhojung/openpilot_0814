@@ -7,7 +7,7 @@ OpkrEnableLogger:0
 OpkrEnableGetoffAlert:0
 OpkrAutoResume:1
 OpkrVariableCruise:1
-OpkrLaneChangeSpeed:45
+OpkrLaneChangeSpeed:30
 OpkrAutoLaneChangeDelay:0
 OpkrSteerAngleCorrection:0
 PutPrebuiltOn:1
@@ -32,6 +32,7 @@ TorqueKi:1
 TorqueFriction:5
 TorqueUseAngle:1
 TorqueMaxLatAccel:28
+TorqueAngDeadZone:10
 CameraOffsetAdj:60
 PathOffsetAdj:0
 SteerRatioAdj:1550

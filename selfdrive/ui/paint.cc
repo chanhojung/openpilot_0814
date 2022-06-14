@@ -156,7 +156,23 @@ static void ui_draw_vision_lane_lines(UIState *s) {
 
   float red_lvl_line = 0;
   float green_lvl_line = 0;
-  //if (!scene.end_to_end) {
+
+
+
+  // paint left blindspot line
+  NVGcolor color;
+  if( scene.leftblindspot )
+  {
+    color = nvgRGBAf(1.0, 0.0, 0.0, std::clamp<float>(1.0 - scene.lane_blindspot_probs[0], 0.0, 1.0));
+    ui_draw_line(s, scene.lane_blindspot_vertices[0], &color, nullptr);
+   }
+
+  if( scene.rightblindspot )
+  {
+    color = nvgRGBAf(1.0, 0.0, 0.0, std::clamp<float>(1.0 - scene.lane_blindspot_probs[1], 0.0, 1.0));
+    ui_draw_line(s, scene.lane_blindspot_vertices[1], &color, nullptr);
+  }
+
   if (!scene.lateralPlan.lanelessModeStatus) {
     // paint lanelines, Hoya's colored lane line
     for (int i = 0; i < std::size(scene.lane_line_vertices); i++) {
@@ -167,7 +183,7 @@ static void ui_draw_vision_lane_lines(UIState *s) {
         red_lvl_line = 1.0;
         green_lvl_line = 1.0 - ((0.4 - scene.lane_line_probs[i]) * 2.5);
       }
-      NVGcolor color = nvgRGBAf(1.0, 1.0, 1.0, scene.lane_line_probs[i]);
+      color = nvgRGBAf(1.0, 1.0, 1.0, scene.lane_line_probs[i]);
       if (!scene.comma_stock_ui) {
         color = nvgRGBAf(red_lvl_line, green_lvl_line, 0, 1);
       }
@@ -176,7 +192,7 @@ static void ui_draw_vision_lane_lines(UIState *s) {
 
     // paint road edges
     for (int i = 0; i < std::size(scene.road_edge_vertices); i++) {
-      NVGcolor color = nvgRGBAf(1.0, 0.0, 0.0, std::clamp<float>(1.0 - scene.road_edge_stds[i], 0.0, 1.0));
+      color = nvgRGBAf(1.0, 0.0, 0.0, std::clamp<float>(1.0 - scene.road_edge_stds[i], 0.0, 1.0));
       ui_draw_line(s, scene.road_edge_vertices[i], &color, nullptr);
     }
   }
@@ -200,23 +216,6 @@ static void ui_draw_vision_lane_lines(UIState *s) {
   }
 
  
-  // paint left blindspot line
-
-  NVGcolor color;
-  if( scene.leftblindspot )
-  {
-    color = nvgRGBAf(1.0, 0.0, 0.0, std::clamp<float>(1.0 - scene.lane_blindspot_probs[0], 0.0, 1.0));
-    ui_draw_line(s, scene.lane_blindspot_vertices[0], &color, nullptr);
- 
-  }
-
-  if( scene.rightblindspot )
-  {
-    color = nvgRGBAf(1.0, 0.0, 0.0, std::clamp<float>(1.0 - scene.lane_blindspot_probs[1], 0.0, 1.0));
-    ui_draw_line(s, scene.lane_blindspot_vertices[1], &color, nullptr);
-  }
-
-
   // paint path
   ui_draw_line(s, scene.track_vertices, nullptr, &track_bg);
 }
