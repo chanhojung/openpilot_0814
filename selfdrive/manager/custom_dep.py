@@ -3,10 +3,11 @@ import os
 import sys
 import errno
 import shutil
-from urllib.request import urlopen
 from glob import glob
 import subprocess
 import importlib.util
+from urllib.request import urlopen
+
 
 # NOTE: Do NOT import anything here that needs be built (e.g. params)
 from common.basedir import BASEDIR
@@ -21,13 +22,15 @@ TMP_DIR = '/data/tmp'
 PYEXTRA_DIR = '/data/openpilot/pyextra'
 
 
-def wait_for_internet_connection():
+def wait_for_internet_connection(return_on_failure=False):
   while True:
     try:
       _ = urlopen('https://www.google.com/', timeout=10)
-      return
-    except Exception:
-      pass
+      return True
+    except Exception as e:
+      print(f'Wait for internet failed: {e}')
+      if return_on_failure:
+        return False
 
 
 def install_dep(spinner):
@@ -62,8 +65,10 @@ def install_dep(spinner):
     subprocess.check_call(['sh', './install_gfortran.sh'], cwd=os.path.join(BASEDIR, 'installer/custom/'))
 
     # install pip from git
+    my_env = os.environ.copy()
+    my_env['NPY_NUM_BUILD_JOBS'] = '1'
     package = 'git+https://github.com/move-fast/opspline.git@master'
-    pip = subprocess.Popen([sys.executable, "-m", "pip", "install", "-v", package], stdout=subprocess.PIPE)
+    pip = subprocess.Popen([sys.executable, "-m", "pip", "install", "-v", package], stdout=subprocess.PIPE, env=my_env)
 
   # Read progress from pip and update spinner
   steps = 0
