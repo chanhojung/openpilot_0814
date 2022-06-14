@@ -80,10 +80,10 @@ class MapD():
     self.location_stdev = log.accuracy  # log accuracies are presumably 1 standard deviation.
 
     _debug('Mapd: ********* Got GPS fix'
-           f'Pos: {self.location_deg} +/- {self.location_stdev * 2.} mts.\n'
-           f'Bearing: {log.bearingDeg} +/- {log.bearingAccuracyDeg * 2.} deg.\n'
-           f'timestamp: {strftime("%d-%m-%y %H:%M:%S", gmtime(self.last_gps_fix_timestamp * 1e-3))}'
-           f'*******')
+           + f'Pos: {self.location_deg} +/- {self.location_stdev * 2.} mts.\n'
+           + f'Bearing: {log.bearingDeg} +/- {log.bearingAccuracyDeg * 2.} deg.\n'
+           + f'timestamp: {strftime("%d-%m-%y %H:%M:%S", gmtime(self.last_gps_fix_timestamp * 1e-3))}'
+           + '*******')
 
   def _query_osm_not_blocking(self):
     def query(osm, location_deg, location_rad, radius):
