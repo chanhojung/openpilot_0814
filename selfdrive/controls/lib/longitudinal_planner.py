@@ -17,7 +17,7 @@ from selfdrive.controls.lib.drive_helpers import V_CRUISE_MAX, CONTROL_N
 LON_MPC_STEP = 0.2  # first step is 0.2s
 AWARENESS_DECEL = -0.2  # car smoothly decel at .2m/s^2 when user is distracted
 A_CRUISE_MIN = -1.2
-A_CRUISE_MAX_VALS = [1.2, 1.2, 0.8, 0.6]
+A_CRUISE_MAX_VALS = [1.5, 1.2, 0.8, 0.6]
 A_CRUISE_MAX_BP = [0., 15., 25., 40.]
 
 # Lookup table for turns
@@ -109,7 +109,7 @@ class Planner:
       x = np.zeros(len(T_IDXS_MPC))
       v = np.zeros(len(T_IDXS_MPC))
       a = np.zeros(len(T_IDXS_MPC))
-    self.mpc.update(sm['carState'], sm['radarState'], v_cruise, x, v, a)
+    self.mpc.update(sm['carState'], sm['radarState'], sm['modelV2'], v_cruise, x, v, a)
     self.v_desired_trajectory = np.interp(T_IDXS[:CONTROL_N], T_IDXS_MPC, self.mpc.v_solution)
     self.a_desired_trajectory = np.interp(T_IDXS[:CONTROL_N], T_IDXS_MPC, self.mpc.a_solution)
     self.j_desired_trajectory = np.interp(T_IDXS[:CONTROL_N], T_IDXS_MPC[:-1], self.mpc.j_solution)
