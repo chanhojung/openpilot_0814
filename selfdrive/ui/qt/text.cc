@@ -41,6 +41,7 @@ int main(int argc, char *argv[]) {
 #ifdef __aarch64__
   QPushButton *btn2 = new QPushButton();
   QPushButton *btn3 = new QPushButton();
+  QPushButton *btn4 = new QPushButton();
   QLabel *label2 = new QLabel();
   QString device_ip = "---";
   const QHostAddress &localhost = QHostAddress(QHostAddress::LocalHost);
@@ -51,9 +52,10 @@ int main(int argc, char *argv[]) {
   label2->setText(device_ip);
   label2->setStyleSheet("color: #e0e879");
   main_layout->addWidget(label2, 0, 0, Qt::AlignRight | Qt::AlignTop);
-  btn->setText(" Update ");
+  btn->setText("Update");
   btn2->setText("MixPlorer");
-  btn3->setText(" Restore ");
+  btn3->setText("Restore");
+  btn4->setText("Reset");
   QObject::connect(btn, &QPushButton::clicked, [=]() {
     QProcess::execute("pkill -f thermald");
     QProcess::execute("rm -f /data/openpilot/prebuilt");
@@ -70,8 +72,13 @@ int main(int argc, char *argv[]) {
     QProcess::execute(cmd);
     QProcess::execute("reboot");
   });
+  QObject::connect(btn4, &QPushButton::clicked, [=]() {
+    btn4->setEnabled(false);
+    QProcess::execute("/data/openpilot/selfdrive/assets/addon/script/git_reset.sh");
+  });
   main_layout->addWidget(btn2, 1, 0, Qt::AlignLeft | Qt::AlignBottom);
   main_layout->addWidget(btn3, 1, 0, Qt::AlignCenter | Qt::AlignBottom);
+  main_layout->addWidget(btn4, 1, 0, Qt::AlignCenter | Qt::AlignBottom);
 #else
   btn->setText("Exit");
   QObject::connect(btn, &QPushButton::clicked, &a, &QApplication::quit);
