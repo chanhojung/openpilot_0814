@@ -848,11 +848,11 @@ class CarController():
                 accel = self.accel - (DT_CTRL * interp(CS.out.vEgo, [0.5, 2.0], [2.0, 5.0]))
             elif aReqValue < 0.0 and self.stopping_dist_adj_enabled:
               stock_weight = interp(abs(lead_objspd), [1.0, 4.0, 6.0, 20.0, 50.0], [0.2, 0.4, 1.0, 1.0, 0.1])
-              accel = -(accel * (1.0 - stock_weight)) + aReqValue * stock_weight
+              accel = accel * (1.0 - stock_weight) + aReqValue * stock_weight
               accel = min(accel, -0.4) if CS.lead_distance <= 4.5 and not CS.out.standstill else accel
             elif aReqValue < 0.0:
               stock_weight = interp(CS.lead_distance, [6.0, 10.0, 18.0, 25.0, 32.0], [1.0, 0.85, 1.0, 0.4, 1.0])
-              accel = -(accel * (1.0 - stock_weight)) + aReqValue * stock_weight
+              accel = accel * (1.0 - stock_weight) + aReqValue * stock_weight
             else:
               stock_weight = 0.0
               self.keep_decel_on = False
