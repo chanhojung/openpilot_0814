@@ -10,9 +10,9 @@ export GZ_MAP_FILE=${OSM_DIR}/${GZ_MAP_FILE_NAME}
 cd $OSM_DIR
 
 # Download map file
-wget https://s3.eu-central-1.amazonaws.com/files.as.osm/${GZ_MAP_FILE_NAME}
+wget https://opkr.tk/${GZ_MAP_FILE_NAME}
 
-if [[ "$?" != 0 ]]; then
+if [ "$?" != 0 ]; then
   echo "Error downloading map file"
 else
   echo "Successfuly downloaded map file"
