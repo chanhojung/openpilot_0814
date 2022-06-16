@@ -41,6 +41,7 @@ class LatCtrlToqATOM(LatControlTorque):
     self.live_tune_enabled = False
     self.lt_timer = 0
 
+    self.steering_angle_deadzone_deg = TORQUE.steeringAngleDeadzoneDeg
 
 class LatCtrlLqrATOM(LatControlLQR):
   def __init__(self, CP, CI, LQR):

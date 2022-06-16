@@ -238,6 +238,9 @@ struct CarState {
   engineRpm @55 :Float32;
   chargeMeter @56 :Float32;
 
+  # Hoya
+  currentGear @57 :Float32;  
+
   struct TPMS {
     unit @0 :Int8;
     fl @1 :Float32;

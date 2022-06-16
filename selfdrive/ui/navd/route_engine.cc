@@ -196,7 +196,7 @@ void RouteEngine::timerUpdate() {
         if (next_segment.isValid()) {
           segment = next_segment;
 
-          recompute_backoff = std::max(0, recompute_backoff - 1);
+          recompute_backoff = 0;
           recompute_countdown = 0;
         } else {
           qWarning() << "Destination reached";
@@ -264,7 +264,7 @@ void RouteEngine::recomputeRoute() {
 
   if (recompute_countdown == 0 && should_recompute) {
     recompute_countdown = std::pow(2, recompute_backoff);
-    recompute_backoff = std::min(7, recompute_backoff + 1);
+    recompute_backoff = std::min(6, recompute_backoff + 1);
     calculateRoute(*new_destination);
   } else {
     recompute_countdown = std::max(0, recompute_countdown - 1);

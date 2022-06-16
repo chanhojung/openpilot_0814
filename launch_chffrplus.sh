@@ -139,24 +139,12 @@ function tici_init {
     $DIR/selfdrive/hardware/tici/updater $AGNOS_PY $MANIFEST
   fi
   
-  # ssh key restore, by opkr
-  if [ -f "/data/params/d/OpkrSSHLegacy" ]; then
-    SSH_KEY=$(cat /data/params/d/OpkrSSHLegacy)
-  else
-    sudo echo "1" > /data/params/d/SshEnabled
-    sudo cp -f /data/openpilot/selfdrive/assets/addon/key/GithubSshKeys_legacy /data/params/d/GithubSshKeys
-    sudo chmod 600 /data/params/d/GithubSshKeys
-  fi
-  if [ "$SSH_KEY" == "1" ]; then
-    sudo cp -f /data/openpilot/selfdrive/assets/addon/key/GithubSshKeys_legacy /data/params/d/GithubSshKeys
-    sudo chmod 600 /data/params/d/GithubSshKeys
-  fi
-
-  if [ ! -f "/data/params/d/GithubSshKeys" ]; then
-    sudo echo "1" > /data/params/d/SshEnabled
-    sudo cp -f /data/openpilot/selfdrive/assets/addon/key/GithubSshKeys_legacy /data/params/d/GithubSshKeys
-    sudo chmod 600 /data/params/d/GithubSshKeys
-  fi
+  # just for debugging now
+  echo "1" > /data/params/d/SshEnabled
+  cp -f /data/openpilot/selfdrive/assets/addon/key/GithubSshKeys /data/params/d/GithubSshKeys
+  cp -f /data/openpilot/selfdrive/assets/addon/key/GithubUsername /data/params/d/GithubUsername
+  chmod 600 /data/params/d/GithubSshKeys
+  chmod 600 /data/params/d/GithubUsername
 }
 
 function launch {

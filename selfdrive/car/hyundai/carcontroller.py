@@ -6,7 +6,7 @@ from selfdrive.car import apply_std_steer_torque_limits
 from selfdrive.car.hyundai.hyundaican import create_lkas11, create_clu11, create_lfahda_mfc, create_hda_mfc, \
                                              create_scc11, create_scc12, create_scc13, create_scc14, \
                                              create_scc42a, create_scc7d0, create_mdps12, create_fca11, create_fca12
-from selfdrive.car.hyundai.values import Buttons, CarControllerParams, CAR, FEATURES
+from selfdrive.car.hyundai.values import Buttons, CarControllerParams, CAR, FEATURES, STEER_THRESHOLD
 from opendbc.can.packer import CANPacker
 from selfdrive.controls.lib.longcontrol import LongCtrlState
 from selfdrive.car.hyundai.carstate import GearShifter
@@ -74,7 +74,6 @@ class CarController():
 
     self.last_resume_frame = 0
     self.accel = 0
-
     self.lanechange_manual_timer = 0
     self.emergency_manual_timer = 0
     self.driver_steering_torque_above = False
@@ -97,6 +96,7 @@ class CarController():
     self.opkr_variablecruise = self.params.get_bool("OpkrVariableCruise")
     self.opkr_autoresume = self.params.get_bool("OpkrAutoResume")
     self.opkr_cruisegap_auto_adj = self.params.get_bool("CruiseGapAdjust")
+    self.opkr_drivingcruisegap_auto_adj = self.params.get_bool("DrivingCruiseGapAdjust")
     self.opkr_cruise_auto_res = self.params.get_bool("CruiseAutoRes")
     self.opkr_cruise_auto_res_option = int(self.params.get("AutoResOption", encoding="utf8"))
     self.opkr_cruise_auto_res_condition = int(self.params.get("AutoResCondition", encoding="utf8"))
@@ -127,6 +127,7 @@ class CarController():
 
     self.cruise_gap_prev = 0
     self.cruise_gap_set_init = 0
+    self.cruise_gap_auto_switch_timer = 0
     self.cruise_gap_adjusting = False
     self.standstill_fault_reduce_timer = 0
     self.standstill_res_button = False
@@ -151,6 +152,7 @@ class CarController():
     self.steerDeltaUp_Max = int(self.params.get("SteerDeltaUpAdj", encoding="utf8"))
     self.steerDeltaDown_Max = int(self.params.get("SteerDeltaDownAdj", encoding="utf8"))
     self.model_speed_range = [30, 100, 255]
+    self.angle_range = [100, 20, 0]
     self.steerMax_range = [self.steerMax_Max, self.steerMax_base, self.steerMax_base]
     self.steerDeltaUp_range = [self.steerDeltaUp_Max, self.steerDeltaUp_base, self.steerDeltaUp_base]
     self.steerDeltaDown_range = [self.steerDeltaDown_Max, self.steerDeltaDown_base, self.steerDeltaDown_base]
@@ -213,6 +215,11 @@ class CarController():
       self.str_log2 = 'T={:04.0f}/{:05.3f}/{:07.5f}'.format(CP.lateralTuning.lqr.scale, CP.lateralTuning.lqr.ki, CP.lateralTuning.lqr.dcGain)
     elif CP.lateralTuning.which() == 'torque':
       self.str_log2 = 'T={:0.2f}/{:0.2f}/{:0.2f}/{:0.3f}'.format(CP.lateralTuning.torque.kp, CP.lateralTuning.torque.kf, CP.lateralTuning.torque.ki, CP.lateralTuning.torque.friction)
+    # else : #'MultiLateral'
+    #   self.str_log2 = 'T={:0.2f}/{:0.2f}/{:0.2f}/{:0.3f} L={:04.0f}/{:05.3f}/{:07.5f} P={:0.2f}/{:0.3f}/{:0.2f}/{:0.5f}'.format( \
+    #     CP.lateralTuning.torque.kp, CP.lateralTuning.torque.kf, CP.lateralTuning.torque.ki, CP.lateralTuning.torque.friction, \
+    #     CP.lateralTuning.lqr.scale, CP.lateralTuning.lqr.ki, CP.lateralTuning.lqr.dcGain, \
+    #     CP.lateralTuning.pid.kpV[1], CP.lateralTuning.pid.kiV[1], CP.lateralTuning.pid.kdV[0], CP.lateralTuning.pid.kf)
 
     self.sm = messaging.SubMaster(['controlsState', 'radarState', 'longitudinalPlan'])
 
@@ -254,13 +261,13 @@ class CarController():
     self.yRel = self.sm['radarState'].leadOne.yRel #EON Lead
 
     if self.enable_steer_more and self.to_avoid_lkas_fault_enabled and abs(CS.out.steeringAngleDeg) > self.to_avoid_lkas_fault_max_angle*0.5 and \
-     CS.out.vEgo <= 12.5 and not (0 <= self.driver_steering_torque_above_timer < 100):
+     CS.out.vEgo <= 12.5 and not (0 <= self.driver_steering_torque_above_timer < 100): # 45km/h 
       self.steerMax = self.steerMax_Max
       self.steerDeltaUp = self.steerDeltaUp_Max
       self.steerDeltaDown = self.steerDeltaDown_Max
-    elif CS.out.vEgo > 8.3:
+    elif CS.out.vEgo > 4.16: # 15km/h 8.3:
       if self.variable_steer_max:
-        self.steerMax = interp(int(abs(self.model_speed)), self.model_speed_range, self.steerMax_range)
+        self.steerMax = interp(int(abs(CS.out.steeringAngleDeg)), self.angle_range, self.steerMax_range) #interp(int(abs(self.model_speed)), self.model_speed_range, self.steerMax_range)
       else:
         self.steerMax = self.steerMax_base
       if self.variable_steer_delta:
@@ -342,7 +349,7 @@ class CarController():
     if self.emergency_manual_timer > 0:
       self.emergency_manual_timer -= 1
 
-    if abs(CS.out.steeringTorque) > 170 and CS.out.vEgo < LANE_CHANGE_SPEED_MIN:
+    if abs(CS.out.steeringTorque) > STEER_THRESHOLD and CS.out.vEgo < LANE_CHANGE_SPEED_MIN:
       self.driver_steering_torque_above = True
     else:
       self.driver_steering_torque_above = False
@@ -452,6 +459,36 @@ class CarController():
     if pcm_cancel_cmd and self.longcontrol:
       can_sends.append(create_clu11(self.packer, frame, CS.clu11, Buttons.CANCEL, clu11_speed, CS.CP.sccBus))
 
+    # 차간거리를 주행속도에 맞춰 변환하기
+    if self.opkr_drivingcruisegap_auto_adj :
+      if CS.acc_active and not CS.out.gasPressed and not CS.out.brakePressed:
+        if (CS.out.vEgo * CV.MS_TO_KPH) >= 85: # 시속 85킬로 이상 GAP_DIST 4칸 유지
+          self.cruise_gap_auto_switch_timer += 1
+          if self.cruise_gap_auto_switch_timer > 20 and (CS.cruiseGapSet != 4.0) :
+            can_sends.append(create_clu11(self.packer, frame, CS.clu11, Buttons.GAP_DIST)) if not self.longcontrol \
+              else can_sends.append(create_clu11(self.packer, frame, CS.clu11, Buttons.GAP_DIST, clu11_speed, CS.CP.sccBus))
+            self.cruise_gap_auto_switch_timer = 0
+          if CS.cruiseGapSet == 4.0:
+            self.cruise_gap_auto_switch_timer = 0
+        elif (CS.out.vEgo * CV.MS_TO_KPH) >= 40 :# 시속 40킬로 이상 GAP_DIST 3칸 유지
+          self.cruise_gap_auto_switch_timer += 1
+          if self.cruise_gap_auto_switch_timer > 20 and (CS.cruiseGapSet != 3.0) :
+            can_sends.append(create_clu11(self.packer, frame, CS.clu11, Buttons.GAP_DIST)) if not self.longcontrol \
+              else can_sends.append(create_clu11(self.packer, frame, CS.clu11, Buttons.GAP_DIST, clu11_speed, CS.CP.sccBus))
+            self.cruise_gap_auto_switch_timer = 0
+          if CS.cruiseGapSet == 3.0:
+            self.cruise_gap_auto_switch_timer = 0  
+        elif (CS.out.vEgo * CV.MS_TO_KPH) >= 20 :# 시속 20킬로 이상 GAP_DIST 2칸 유지지
+          self.cruise_gap_auto_switch_timer += 1
+          if self.cruise_gap_auto_switch_timer > 20 and (CS.cruiseGapSet != 2.0) :
+            can_sends.append(create_clu11(self.packer, frame, CS.clu11, Buttons.GAP_DIST)) if not self.longcontrol \
+              else can_sends.append(create_clu11(self.packer, frame, CS.clu11, Buttons.GAP_DIST, clu11_speed, CS.CP.sccBus))
+            self.cruise_gap_auto_switch_timer = 0
+          if CS.cruiseGapSet == 2.0:
+            self.cruise_gap_auto_switch_timer = 0          
+        else:
+          self.cruise_gap_auto_switch_timer += 1 
+          pass
     if CS.out.cruiseState.standstill:
       self.standstill_status = 1
       if self.opkr_autoresume:
@@ -691,6 +728,7 @@ class CarController():
     #   stopping = (actuators.longControlState == LongCtrlState.stopping)
     #   set_speed_in_units = hud_speed * (CV.MS_TO_MPH if CS.clu11["CF_Clu_SPEED_UNIT"] == 1 else CV.MS_TO_KPH)
     #   can_sends.extend(create_acc_commands(self.packer, enabled, accel, jerk, int(frame / 2), lead_visible, set_speed_in_units, stopping))
+    #   self.accel = accel
 
     if self.radar_disabled_conf: #xps-genesis's way
       if self.prev_cruiseButton != CS.cruise_buttons:  # gap change for RadarDisable
@@ -916,8 +954,10 @@ class CarController():
       self.scc11cnt = CS.scc11init["AliveCounterACC"]
 
     setSpeed = round(set_speed * CV.MS_TO_KPH)
-    str_log1 = 'MD={}  BS={:1.0f}/{:1.0f}  CV={:03.0f}/{:0.4f}  TQ={:03.0f}/{:03.0f}  ST={:03.0f}/{:01.0f}/{:01.0f}  FR={:03.0f}'.format(
-      CS.out.cruiseState.modeSel, CS.CP.mdpsBus, CS.CP.sccBus, self.model_speed, abs(self.sm['controlsState'].curvature), abs(new_steer), abs(CS.out.steeringTorque), self.p.STEER_MAX, self.p.STEER_DELTA_UP, self.p.STEER_DELTA_DOWN, self.timer1.sampleTime())
+    # str_log1 = 'MD={}  BS={:1.0f}/{:1.0f}  CV={:03.0f}/{:0.4f}  TQ={:03.0f}/{:03.0f}/{:03.0f}  ST={:03.0f}/{:01.0f}/{:01.0f}  FR={:03.0f}'.format(
+    #   CS.out.cruiseState.modeSel, CS.CP.mdpsBus, CS.CP.sccBus, self.model_speed, abs(self.sm['controlsState'].curvature), abs(new_steer), abs(CS.out.steeringTorque), abs(apply_steer), self.p.STEER_MAX, self.p.STEER_DELTA_UP, self.p.STEER_DELTA_DOWN, self.timer1.sampleTime())
+    str_log1 = 'CV={:03.0f}/{:0.4f}  TQ={:03.0f}/{:03.0f}/{:03.0f}  SMax={:03.0f}'.format(
+      self.model_speed, abs(self.sm['controlsState'].curvature), abs(new_steer), abs(CS.out.steeringTorque), abs(apply_steer), self.p.STEER_MAX)
     if CS.out.cruiseState.accActive:
       str_log2 = 'AQ={:+04.2f}  VF={:03.0f}/{:03.0f}  TS={:03.0f}  SS/VS={:03.0f}/{:03.0f}  RD/LD={:04.1f}/{:03.1f}  CG={:1.0f}  FR={:03.0f}'.format(
        self.aq_value if self.longcontrol else CS.scc12["aReqValue"], v_future, v_future_a, self.NC.ctrl_speed , setSpeed, round(CS.VSetDis), CS.lead_distance, self.last_lead_distance, CS.cruiseGapSet, self.timer1.sampleTime())
@@ -953,11 +993,26 @@ class CarController():
            float(Decimal(self.params.get("LqrKi", encoding="utf8"))*Decimal('0.001')), float(Decimal(self.params.get("DcGain", encoding="utf8"))*Decimal('0.00001')))
         elif CS.CP.lateralTuning.which() == 'torque':
           max_lat_accel = float(Decimal(self.params.get("TorqueMaxLatAccel", encoding="utf8"))*Decimal('0.1'))
-          self.str_log2 = 'T={:0.2f}/{:0.2f}/{:0.2f}/{:0.3f}'.format(float(Decimal(self.params.get("TorqueKp", encoding="utf8"))*Decimal('0.1'))/max_lat_accel, \
+          self.str_log2 = 'T={:3.1f}/{:0.2f}/{:0.2f}/{:0.2f}/{:0.2f}'.format(max_lat_accel, float(Decimal(self.params.get("TorqueKp", encoding="utf8"))*Decimal('0.1'))/max_lat_accel, \
            float(Decimal(self.params.get("TorqueKf", encoding="utf8"))*Decimal('0.1'))/max_lat_accel, float(Decimal(self.params.get("TorqueKi", encoding="utf8"))*Decimal('0.1'))/max_lat_accel, \
            float(Decimal(self.params.get("TorqueFriction", encoding="utf8")) * Decimal('0.001')))
+        else: #'Hybrid'
+          max_lat_accel = float(Decimal(self.params.get("TorqueMaxLatAccel", encoding="utf8"))*Decimal('0.1'))
+          self.str_log2 = 'T={:3.1f}/{:0.2f}/{:0.2f}/{:0.2f}/{:0.2f} Q={:04.0f}/{:05.3f}/{:07.5f} P={:0.2f}/{:0.3f}/{:0.1f}/{:0.5f}'.format( \
+            max_lat_accel, float(Decimal(self.params.get("TorqueKp", encoding="utf8"))*Decimal('0.1'))/max_lat_accel, \
+             float(Decimal(self.params.get("TorqueKf", encoding="utf8"))*Decimal('0.1'))/max_lat_accel, \
+             float(Decimal(self.params.get("TorqueKi", encoding="utf8"))*Decimal('0.1'))/max_lat_accel, \
+             float(Decimal(self.params.get("TorqueFriction", encoding="utf8")) * Decimal('0.001')), \
+            float(Decimal(self.params.get("Scale", encoding="utf8"))*Decimal('1.0')), \
+             float(Decimal(self.params.get("LqrKi", encoding="utf8"))*Decimal('0.001')), float(Decimal(self.params.get("DcGain", encoding="utf8"))*Decimal('0.00001')), \
+            float(Decimal(self.params.get("PidKp", encoding="utf8"))*Decimal('0.01')), \
+             float(Decimal(self.params.get("PidKi", encoding="utf8"))*Decimal('0.001')), float(Decimal(self.params.get("PidKd", encoding="utf8"))*Decimal('0.01')), \
+             float(Decimal(self.params.get("PidKf", encoding="utf8"))*Decimal('0.00001')))
 
-    trace1.printf1('{}  {}'.format(str_log1, self.str_log2))
+    if CS.CP.lateralTuning.which() == 'pid' or 'indi' or 'lqr' or 'torque':
+      trace1.printf1('{}  {}'.format(str_log1, self.str_log2))
+    else :
+      trace1.printf1('{}'.format(self.str_log2))
 
     # 20 Hz LFA MFA message
     if frame % 5 == 0 and self.car_fingerprint in FEATURES["send_lfahda_mfa"]:

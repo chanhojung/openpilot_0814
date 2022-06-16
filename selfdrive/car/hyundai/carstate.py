@@ -8,6 +8,9 @@ from selfdrive.car.hyundai.values import DBC, STEER_THRESHOLD, FEATURES, EV_CAR,
 from selfdrive.car.interfaces import CarStateBase
 from common.numpy_fast import interp
 from common.params import Params
+from selfdrive.car.hyundai.values import DBC, STEER_THRESHOLD, FEATURES, EV_CAR, HYBRID_CAR, Buttons
+from selfdrive.car.interfaces import CarStateBase
+
 
 GearShifter = car.CarState.GearShifter
 
@@ -272,6 +275,13 @@ class CarState(CarStateBase):
     self.parkBrake = cp.vl["TCS13"]["PBRAKE_ACT"] == 1
     self.gasPressed = ret.gasPressed
 
+    # TPMS code added from Neokii
+    tpms_unit = cp.vl["TPMS11"]["UNIT"] * 0.725 if int(cp.vl["TPMS11"]["UNIT"]) > 0 else 1.
+    ret.tpms.fl = tpms_unit * cp.vl["TPMS11"]["PRESSURE_FL"]
+    ret.tpms.fr = tpms_unit * cp.vl["TPMS11"]["PRESSURE_FR"]
+    ret.tpms.rl = tpms_unit * cp.vl["TPMS11"]["PRESSURE_RL"]
+    ret.tpms.rr = tpms_unit * cp.vl["TPMS11"]["PRESSURE_RR"]
+
     # opkr
     ret.tpms = self.get_tpms(
       cp.vl["TPMS11"]["UNIT"],
@@ -328,6 +338,7 @@ class CarState(CarStateBase):
 
     # Gear Selection via Cluster - For those Kia/Hyundai which are not fully discovered, we can use the Cluster Indicator for Gear Selection,
     # as this seems to be standard over all cars, but is not the preferred method.
+    ret.gearStep = 0
     if self.CP.carFingerprint in FEATURES["use_cluster_gears"]:
       gear = cp.vl["CLU15"]["CF_Clu_Gear"]
       ret.gearStep = 0
@@ -349,13 +360,30 @@ class CarState(CarStateBase):
     else:
       ret.gearShifter = self.parse_gear_shifter(self.shifter_values.get(gear))
 
+    ret.currentGear = 0
+    if not self.CP.carFingerprint in FEATURES["use_elect_gears"]:
+      if self.CP.carFingerprint in FEATURES["use_cluster_gears"]:
+        ret.currentGear = cp.vl["LVR11"]["CF_Lvr_CGear"]
+      # elif self.CP.carFingerprint in FEATURES["use_cluster_gears_ext"]: # for Avante, I30
+      #   ret.currentGear = cp.vl["TCU12"]["CUR_GR"]
+      elif self.CP.carFingerprint in FEATURES["use_tcu_gears"]:
+        ret.currentGear = cp.vl["TCU12"]["CUR_GR"]
+      else:
+        ret.currentGear = cp.vl["LVR11"]["CF_Lvr_CGear"]
+    # if self.CP.fcaBus != -1 or self.CP.carFingerprint in FEATURES["use_fca"]:
+    #   ret.stockAeb = cp_fca.vl["FCA11"]["FCA_CmdAct"] != 0
+    #   ret.stockFcw = cp_fca.vl["FCA11"]["CF_VSM_Warn"] == 2
+    # elif not self.CP.radarOffCan:
+    #   ret.stockAeb = cp_scc.vl["SCC12"]["AEB_CmdAct"] != 0
+    #   ret.stockFcw = cp_scc.vl["SCC12"]["CF_VSM_Warn"] == 2
+
     if self.CP.sccBus != -1:
       if self.CP.carFingerprint in FEATURES["use_fca"] or self.fca11_message:
         ret.stockAeb = cp_fca.vl["FCA11"]["FCA_CmdAct"] != 0
         ret.stockFcw = cp_fca.vl["FCA11"]["CF_VSM_Warn"] == 2
       else:
         ret.stockAeb = cp_scc.vl["SCC12"]["AEB_CmdAct"] != 0
-        ret.stockFcw = cp_scc.vl["SCC12"]["CF_VSM_Warn"] == 2
+        ret.stockFcw = cp_scc.vl["SCC12"]["CF_VSM_Warn"] == 2      
 
     # Blind Spot Detection and Lane Change Assist signals
     if self.CP.bsmAvailable:
@@ -446,6 +474,8 @@ class CarState(CarStateBase):
 
       ("ESC_Off_Step", "TCS15"),
       ("AVH_LAMP", "TCS15"),
+      ("CF_Lvr_CGear", "LVR11"), 
+      ("CF_Lvr_GearInf", "LVR11"),  #Transmission Gear (0=N or P, 1~8=D, 14=R)      
 
       ("CF_Lvr_CruiseSet", "LVR12"),
       ("CRUISE_LAMP_M", "EMS16"),

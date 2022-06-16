@@ -46,7 +46,7 @@ def set_long_tune(tune, name):
 
 
 ###### LAT ######
-def set_lat_tune(tune, name, max_lat_accel=2.5, FRICTION=.1):
+def set_lat_tune(tune, name, max_lat_accel=2.5, TorqueFriction=.01, steering_angle_deadzone_deg=0.0):
   params = Params()
   if name == LatTunes.ATOM:
     tune.init('atom')

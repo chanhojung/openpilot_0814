@@ -39,9 +39,20 @@ CRUISE_INTERVAL_SIGN = {
 
 
 class MPC_COST_LAT:
-  PATH = 1.0
-  HEADING = 1.0
+  PATH = 1.0 #1.0
+  HEADING = 1.0 #1.0
   STEER_RATE = 1.0
+  LANELESS_HEADING_MIN = 0.15
+
+
+def apply_deadzone(error, deadzone):
+  if error > deadzone:
+    error -= deadzone
+  elif error < - deadzone:
+    error += deadzone
+  else:
+    error = 0.
+  return error
 
 
 def apply_deadzone(error, deadzone):
@@ -108,25 +119,26 @@ def get_lag_adjusted_curvature(CP, v_ego, psis, curvatures, curvature_rates):
     curvatures = [0.0]*CONTROL_N
     curvature_rates = [0.0]*CONTROL_N
 
+  v_ego = max(v_ego, 0.1)
+
   # TODO this needs more thought, use .2s extra for now to estimate other delays
   delay = max(0.01, CP.steerActuatorDelay)
-  current_curvature = curvatures[0]
-  psi = interp(delay, T_IDXS[:CONTROL_N], psis)
-  desired_curvature_rate = curvature_rates[0]
 
   # MPC can plan to turn the wheel and turn back before t_delay. This means
   # in high delay cases some corrections never even get commanded. So just use
   # psi to calculate a simple linearization of desired curvature
-  curvature_diff_from_psi = psi / (max(v_ego, 1e-1) * delay) - current_curvature
-  desired_curvature = current_curvature + 2 * curvature_diff_from_psi
+  current_curvature_desired = curvatures[0]
+  psi = interp(delay, T_IDXS[:CONTROL_N], psis)
+  average_curvature_desired = psi / (v_ego * delay)
+  desired_curvature = 2 * average_curvature_desired - current_curvature_desired
 
-  v_ego = max(v_ego, 0.1)
+  # This is the "desired rate of the setpoint" not an actual desired rate
+  desired_curvature_rate = curvature_rates[0]
   max_curvature_rate = MAX_LATERAL_JERK / (v_ego**2)
   safe_desired_curvature_rate = clip(desired_curvature_rate,
                                           -max_curvature_rate,
                                           max_curvature_rate)
   safe_desired_curvature = clip(desired_curvature,
-                                     current_curvature - max_curvature_rate * DESIRED_CURVATURE_LIMIT,
-                                     current_curvature + max_curvature_rate * DESIRED_CURVATURE_LIMIT)
-
+                                     current_curvature_desired - max_curvature_rate * DESIRED_CURVATURE_LIMIT,
+                                     current_curvature_desired + max_curvature_rate * DESIRED_CURVATURE_LIMIT)
   return safe_desired_curvature, safe_desired_curvature_rate

@@ -56,7 +56,6 @@ class VehicleModel:
       sa: Steering wheel angle [rad]
       u: Speed [m/s]
       roll: Road Roll [rad]
-
     Returns:
       2x1 matrix with steady state solution (lateral speed, rotational speed)
     """
@@ -215,7 +214,7 @@ def dyn_ss_sol(sa: float, u: float, roll: float, VM: VehicleModel) -> np.ndarray
     u: Speed [m/s]
     roll: Road Roll [rad]
     VM: Vehicle model
-
+    
   Returns:
     2x1 matrix with steady state solution
   """

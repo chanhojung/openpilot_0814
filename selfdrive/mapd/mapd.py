@@ -244,7 +244,7 @@ class MapD():
       map_data_msg.liveMapData.currentRoadName = ""
 
     if ref is not None:
-      map_data_msg.liveMapData.ref = " (" + str(ref) + ")"
+      map_data_msg.liveMapData.ref = "(#" + str(ref) + ") "
     else:
       map_data_msg.liveMapData.ref = ""
 

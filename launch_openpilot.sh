@@ -47,6 +47,10 @@ if [ -f "/data/bootanimation.zip" ]; then
     fi
 fi
 
+if [ ! -f "/data/openpilot/selfdrive/modeld/models/supercombo.dlc" ]; then
+    cat /data/openpilot/selfdrive/modeld/models/supercombo.dlca* > /data/openpilot/selfdrive/modeld/models/supercombo.dlc
+fi
+
 export PASSIVE="0"
 exec ./launch_chffrplus.sh
 

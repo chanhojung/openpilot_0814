@@ -25,7 +25,6 @@ from decimal import Decimal
 LOW_SPEED_FACTOR = 200
 JERK_THRESHOLD = 0.2
 
-
 class LatControlTorque(LatControl):
   def __init__(self, CP, CI):
     super().__init__(CP, CI)
@@ -44,7 +43,6 @@ class LatControlTorque(LatControl):
     self.steering_angle_deadzone_deg = CP.lateralTuning.torque.steeringAngleDeadzoneDeg
 
     self.live_tune_enabled = False
-
     self.lt_timer = 0
 
   def live_tune(self, CP):
@@ -61,6 +59,7 @@ class LatControlTorque(LatControl):
                               k_f=self.kf, pos_limit=1.0, neg_limit=-1.0)
         
       self.mpc_frame = 0
+      #self.steering_angle_deadzone_deg = CP.lateralTuning.torque.steeringAngleDeadzoneDeg
 
   def update(self, active, CS, CP, VM, params, last_actuators, desired_curvature, desired_curvature_rate, llk):
     self.lt_timer += 1
@@ -75,6 +74,7 @@ class LatControlTorque(LatControl):
     if CS.vEgo < MIN_STEER_SPEED or not active:
       output_torque = 0.0
       pid_log.active = False
+      angle_steers_des = 0.0      
     else:
       if self.use_steering_angle:
         actual_curvature = -VM.calc_curvature(math.radians(CS.steeringAngleDeg - params.angleOffsetDeg), CS.vEgo, params.roll)
@@ -116,5 +116,8 @@ class LatControlTorque(LatControl):
       pid_log.actualLateralAccel = actual_lateral_accel
       pid_log.desiredLateralAccel = desired_lateral_accel
 
-    # TODO left is positive in this convention
-    return -output_torque, 0.0, pid_log
+      # Neokii
+      angle_steers_des = math.degrees(VM.get_steer_from_curvature(-desired_curvature, CS.vEgo, params.roll)) + params.angleOffsetDeg      
+
+    #TODO left is positive in this convention
+    return -output_torque, angle_steers_des, pid_log

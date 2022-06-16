@@ -73,6 +73,10 @@ def get_short_version() -> str:
   return get_version().split('-')[0]
 
 @cache
+def get_short_version() -> str:
+  return get_version().split('-')[0]
+
+@cache
 def is_prebuilt() -> bool:
   return os.path.exists(os.path.join(BASEDIR, 'prebuilt'))
 

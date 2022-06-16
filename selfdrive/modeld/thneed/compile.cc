@@ -4,7 +4,7 @@
 #include "selfdrive/modeld/thneed/thneed.h"
 #include "selfdrive/hardware/hw.h"
 
-#define TEMPORAL_SIZE 512
+#define TEMPORAL_SIZE 2*512
 #define DESIRE_LEN 8
 #define TRAFFIC_CONVENTION_LEN 2
 
@@ -26,7 +26,6 @@ int main(int argc, char* argv[]) {
   mdl.addTrafficConvention(traffic_convention, TRAFFIC_CONVENTION_LEN);
   mdl.addImage(input, 0);
   mdl.addExtra(extra, 0);
-
   // first run
   printf("************** execute 1 **************\n");
   memset(output, 0, OUTPUT_SIZE * sizeof(float));

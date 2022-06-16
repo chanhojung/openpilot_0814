@@ -4149,8 +4149,8 @@ Scale::Scale() : AbstractControl("Scale", "Adjust Scale", "../assets/offroad/ico
     auto str = QString::fromStdString(params.get("Scale"));
     int value = str.toInt();
     value = value - 50;
-    if (value <= 50) {
-      value = 50;
+    if (value <= 1000) {
+      value = 1000;
     }
     QString values = QString::number(value);
     params.put("Scale", values.toStdString());
@@ -4161,8 +4161,8 @@ Scale::Scale() : AbstractControl("Scale", "Adjust Scale", "../assets/offroad/ico
     auto str = QString::fromStdString(params.get("Scale"));
     int value = str.toInt();
     value = value + 50;
-    if (value >= 5000) {
-      value = 5000;
+    if (value >= 3000) {
+      value = 3000;
     }
     QString values = QString::number(value);
     params.put("Scale", values.toStdString());
@@ -4410,7 +4410,7 @@ TorqueKf::TorqueKf() : AbstractControl("Kf", "Adjust Kf", "../assets/offroad/ico
     refresh();
   });
   
- QObject::connect(&btnplus, &QPushButton::clicked, [=]() {
+  QObject::connect(&btnplus, &QPushButton::clicked, [=]() {
     auto str = QString::fromStdString(params.get("TorqueKf"));
     auto str1 = QString::fromStdString(params.get("TorqueMaxLatAccel"));
     int value = str.toInt();
@@ -4478,7 +4478,7 @@ TorqueKi::TorqueKi() : AbstractControl("Ki", "Adjust Ki", "../assets/offroad/ico
     refresh();
   });
   
- QObject::connect(&btnplus, &QPushButton::clicked, [=]() {
+  QObject::connect(&btnplus, &QPushButton::clicked, [=]() {
     auto str = QString::fromStdString(params.get("TorqueKi"));
     auto str1 = QString::fromStdString(params.get("TorqueMaxLatAccel"));
     int value = str.toInt();
@@ -4546,7 +4546,7 @@ TorqueFriction::TorqueFriction() : AbstractControl("Friction", "Adjust Friction"
     refresh();
   });
   
- QObject::connect(&btnplus, &QPushButton::clicked, [=]() {
+  QObject::connect(&btnplus, &QPushButton::clicked, [=]() {
     auto str = QString::fromStdString(params.get("TorqueFriction"));
     int value = str.toInt();
     value = value + 5;
