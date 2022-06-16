@@ -394,13 +394,13 @@ class LongitudinalMpc:
     self.params[:,3] = np.copy(self.prev_a)
     self.params[:,4] = self.desired_TR  # shane
 
-    if self.lo_timer%10 == 0:
-      print('x       ={}'.format(x))
-      print('stopline={}'.format(stopline))
-      print('cruise  ={}'.format(cruise_target))
-      print('lead0   ={}'.format(lead_0_obstacle - (3/4) * get_safe_obstacle_distance(v)))
-      print('lead0   ={}'.format(lead_1_obstacle - (3/4) * get_safe_obstacle_distance(v)))
-      print('m_prob  ={}'.format(model.stopLine.prob))
+    if self.lo_timer%50 == 0:
+      print('x       ={:.1f}'.format(x))
+      print('stopline={:.1f}'.format(stopline))
+      print('cruise  ={:.1f}'.format(cruise_target))
+      print('lead0   ={:.1f}'.format(lead_0_obstacle - (3/4) * get_safe_obstacle_distance(v)))
+      print('lead0   ={:.1f}'.format(lead_1_obstacle - (3/4) * get_safe_obstacle_distance(v)))
+      print('m_prob  ={:.1f}'.format(model.stopLine.prob))
 
     self.yref[:,1] = np.min(x_targets, axis=1)
     for i in range(N):
