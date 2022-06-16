@@ -24,7 +24,6 @@ class LateralPlanner:
     self.DH = DesireHelper(CP)
 
     self.last_cloudlog_t = 0
-    self.steer_rate_cost = CP.steerRateCost
     self.solution_invalid_cnt = 0
 
     self.path_xyz = np.zeros((TRAJECTORY_SIZE, 3))
@@ -80,8 +79,6 @@ class LateralPlanner:
     if self.second > 1.0:
       self.use_lanelines = not Params().get_bool("EndToEndToggle")
       self.laneless_mode = int(Params().get("LanelessMode", encoding="utf8"))
-      if Params().get_bool("OpkrLiveTunePanelEnable"):
-        self.steer_rate_cost = float(Decimal(Params().get("SteerRateCostAdj", encoding="utf8")) * Decimal('0.01'))
       self.second = 0.0
 
     self.v_cruise_kph = sm['controlsState'].vCruise
@@ -115,40 +112,40 @@ class LateralPlanner:
     # Calculate final driving path and set MPC costs
     if self.use_lanelines:
       d_path_xyz = self.LP.get_d_path(v_ego, self.t_idxs, self.path_xyz)
-      self.lat_mpc.set_weights(MPC_COST_LAT.PATH, MPC_COST_LAT.HEADING, self.steer_rate_cost)
+      self.lat_mpc.set_weights(MPC_COST_LAT.PATH, MPC_COST_LAT.HEADING, MPC_COST_LAT.STEER_RATE)
       self.laneless_mode_status = False
     elif self.laneless_mode == 0: # Lane Mode(0)
       d_path_xyz = self.LP.get_d_path(v_ego, self.t_idxs, self.path_xyz)
-      self.lat_mpc.set_weights(MPC_COST_LAT.PATH, MPC_COST_LAT.HEADING, self.steer_rate_cost)
+      self.lat_mpc.set_weights(MPC_COST_LAT.PATH, MPC_COST_LAT.HEADING, MPC_COST_LAT.STEER_RATE)
       self.laneless_mode_status = False
     elif self.laneless_mode == 1: # Laneless Mode(1)
       d_path_xyz = self.path_xyz
       # Heading cost is useful at low speed, otherwise end of plan can be off-heading
       heading_cost = interp(v_ego, [5.0, 10.0], [MPC_COST_LAT.HEADING, MPC_COST_LAT.LANELESS_HEADING_MIN])
-      self.lat_mpc.set_weights(MPC_COST_LAT.PATH, heading_cost, self.steer_rate_cost)
+      self.lat_mpc.set_weights(MPC_COST_LAT.PATH, heading_cost, MPC_COST_LAT.STEER_RATE)
       self.laneless_mode_status = True
     elif self.laneless_mode == 2 and ((self.LP.lll_prob + self.LP.rll_prob)/2 < 0.3) and self.DH.lane_change_state == LaneChangeState.off:
       d_path_xyz = self.path_xyz
       # Heading cost is useful at low speed, otherwise end of plan can be off-heading
       heading_cost = interp(v_ego, [5.0, 10.0], [MPC_COST_LAT.HEADING, MPC_COST_LAT.LANELESS_HEADING_MIN])
-      self.lat_mpc.set_weights(MPC_COST_LAT.PATH, heading_cost, self.steer_rate_cost)
+      self.lat_mpc.set_weights(MPC_COST_LAT.PATH, heading_cost, MPC_COST_LAT.STEER_RATE)
       self.laneless_mode_status = True
       self.laneless_mode_status_buffer = True
     elif self.laneless_mode == 2 and ((self.LP.lll_prob + self.LP.rll_prob)/2 > 0.5) and \
       self.laneless_mode_status_buffer and self.DH.lane_change_state == LaneChangeState.off:
       d_path_xyz = self.LP.get_d_path(v_ego, self.t_idxs, self.path_xyz)
-      self.lat_mpc.set_weights(MPC_COST_LAT.PATH, MPC_COST_LAT.HEADING, self.steer_rate_cost)
+      self.lat_mpc.set_weights(MPC_COST_LAT.PATH, MPC_COST_LAT.HEADING, MPC_COST_LAT.STEER_RATE)
       self.laneless_mode_status = False
       self.laneless_mode_status_buffer = False
     elif self.laneless_mode == 2 and self.laneless_mode_status_buffer == True and self.DH.lane_change_state == LaneChangeState.off:
       d_path_xyz = self.path_xyz
       # Heading cost is useful at low speed, otherwise end of plan can be off-heading
       heading_cost = interp(v_ego, [5.0, 10.0], [MPC_COST_LAT.HEADING, MPC_COST_LAT.LANELESS_HEADING_MIN])
-      self.lat_mpc.set_weights(MPC_COST_LAT.PATH, heading_cost, self.steer_rate_cost)
+      self.lat_mpc.set_weights(MPC_COST_LAT.PATH, heading_cost, MPC_COST_LAT.STEER_RATE)
       self.laneless_mode_status = True
     else:
       d_path_xyz = self.LP.get_d_path(v_ego, self.t_idxs, self.path_xyz)
-      self.lat_mpc.set_weights(MPC_COST_LAT.PATH, MPC_COST_LAT.HEADING, self.steer_rate_cost)
+      self.lat_mpc.set_weights(MPC_COST_LAT.PATH, MPC_COST_LAT.HEADING, MPC_COST_LAT.STEER_RATE)
       self.laneless_mode_status = False
       self.laneless_mode_status_buffer = False
 
@@ -209,7 +206,7 @@ class LateralPlanner:
     lateralPlan.laneChangeDirection = self.DH.lane_change_direction
 
     lateralPlan.modelSpeed = float(self.model_speed)
-    lateralPlan.steerRateCost = float(self.steer_rate_cost)
+    lateralPlan.steerRateCost = float(MPC_COST_LAT.STEER_RATE)
     lateralPlan.outputScale = float(self.DH.output_scale)
     lateralPlan.vCruiseSet = float(self.v_cruise_kph)
     lateralPlan.vCurvature = float(sm['controlsState'].curvature)
