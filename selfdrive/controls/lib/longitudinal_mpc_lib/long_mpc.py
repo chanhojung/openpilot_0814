@@ -394,7 +394,7 @@ class LongitudinalMpc:
     self.params[:,3] = np.copy(self.prev_a)
     self.params[:,4] = self.desired_TR  # shane
 
-    if self.lo_timer%100 == 0:
+    if self.lo_timer%10 == 0:
       print('x       ={}'.format(x))
       print('stopline={}'.format(stopline))
       print('cruise  ={}'.format(cruise_target))
