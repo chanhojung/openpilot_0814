@@ -24,7 +24,7 @@ LONG_MPC_DIR = os.path.dirname(os.path.abspath(__file__))
 EXPORT_DIR = os.path.join(LONG_MPC_DIR, "c_generated_code")
 JSON_FILE = os.path.join(LONG_MPC_DIR, "acados_ocp_long.json")
 
-SOURCES = ['lead0', 'lead1', 'cruise']
+SOURCES = ['lead0', 'lead1', 'stop', 'cruise']
 
 X_DIM = 3
 U_DIM = 1
@@ -203,7 +203,7 @@ class LongitudinalMpc:
     self.desired_TR = desired_TR
     self.v_ego = 0.
     self.reset()
-    self.source = SOURCES[2]
+    self.source = SOURCES[3]
 
     self.TR = 1.45
     self.dynamic_TR = 0
@@ -218,6 +218,8 @@ class LongitudinalMpc:
     self.custom_tr_enabled = Params().get_bool("CustomTREnabled")
 
     self.ms_to_spd = CV.MS_TO_KPH if Params().get_bool("IsMetric") else CV.MS_TO_MPH
+
+    self.stop_line = Params().get_bool("ShowStopLine")
 
     self.lo_timer = 0 
 
@@ -330,8 +332,10 @@ class LongitudinalMpc:
     self.desired_TR = desired_TR
     self.set_weights()
 
-  def update(self, carstate, radarstate, v_cruise, x, v, a):
+  def update(self, carstate, radarstate, model, v_cruise, x, v, a):
     self.v_ego = carstate.vEgo
+
+    stopping = model.stopLine.prob > 0.3 if self.stop_line else False
 
     # opkr
     self.lo_timer += 1
@@ -378,6 +382,8 @@ class LongitudinalMpc:
     lead_0_obstacle = lead_xv_0[:,0] + get_stopped_equivalence_factor(lead_xv_0[:,1])
     lead_1_obstacle = lead_xv_1[:,0] + get_stopped_equivalence_factor(lead_xv_1[:,1])
 
+    stopline = model.stopLine.x * np.ones(N+1) if stopping else 400 * np.ones(N+1)
+
     cruise_target = T_IDXS * v_cruise + x[0]
     x_targets = np.column_stack([x,
                                 lead_0_obstacle - (3/4) * get_safe_obstacle_distance(v),
@@ -387,6 +393,14 @@ class LongitudinalMpc:
     self.params[:,2] = 1e3
     self.params[:,3] = np.copy(self.prev_a)
     self.params[:,4] = self.desired_TR  # shane
+
+    if self.lo_timer%50 == 0:
+      print('x       ={}'.format(x))
+      print('stopline={}'.format(stopline))
+      print('cruise  ={}'.format(cruise_target))
+      print('lead0   ={}'.format(lead_0_obstacle - (3/4) * get_safe_obstacle_distance(v)))
+      print('lead0   ={}'.format(lead_1_obstacle - (3/4) * get_safe_obstacle_distance(v)))
+      print('m_prob  ={}'.format(model.stopLine.prob))
 
     self.yref[:,1] = np.min(x_targets, axis=1)
     for i in range(N):
