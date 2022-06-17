@@ -883,8 +883,8 @@ class CarController():
           self.stopped = False
           stock_weight = 0.
 
-        if self.e2e_long_enabled:
-          accel = faccel
+        # if self.e2e_long_enabled:
+        #   accel = faccel
         if self.stock_safety_decel_enabled:
           if CS.scc11["Navi_SCC_Camera_Act"] == 2 and accel > aReqValue:
             accel = aReqValue
