@@ -51,6 +51,10 @@ if [ ! -f "/data/openpilot/selfdrive/modeld/models/supercombo.dlc" ]; then
     cat /data/openpilot/selfdrive/modeld/models/supercombo.dlca* > /data/openpilot/selfdrive/modeld/models/supercombo.dlc
 fi
 
+if [ ! -f "/data/openpilot/selfdrive/modeld/models/supercombo.onnx" ]; then
+    cat /data/openpilot/selfdrive/modeld/models/supercombo.onnxa* > /data/openpilot/selfdrive/modeld/models/supercombo.onnx
+fi
+
 export PASSIVE="0"
 exec ./launch_chffrplus.sh
 

@@ -18,6 +18,7 @@ from casadi import SX, vertcat
 
 from common.params import Params
 from decimal import Decimal
+import common.log as trace1
 
 MODEL_NAME = 'long'
 LONG_MPC_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -263,7 +264,7 @@ class LongitudinalMpc:
 
   def set_weights_for_lead_policy(self, prev_accel_constraint=True):
     a_change_cost = .1 if prev_accel_constraint else 0
-    W = np.diag([0., .03, .0, 10., 0.0, 1.])
+    W = np.diag([0., .2, .25, 1., 0.0, 1.])
     for i in range(N):
       W[4,4] = a_change_cost * np.interp(T_IDXS[i], [0.0, 1.0, 2.0], [1.0, 1.0, 0.0])
       self.solver.cost_set(i, 'W', W)
@@ -289,7 +290,7 @@ class LongitudinalMpc:
     v_prev = self.x0[1]
     self.x0[1] = v
     self.x0[2] = a
-    if abs(v_prev - v) > 2.: # probably only helps if v < v_prev
+    if abs(v_prev - v) > 2.:  # probably only helps if v < v_prev
       for i in range(0, N+1):
         self.solver.set(i, 'x', self.x0)
 
@@ -346,6 +347,8 @@ class LongitudinalMpc:
       self.custom_tr_enabled = Params().get_bool("CustomTREnabled")
 
     #v_ego = self.x0[1]
+    xforward = ((v[1:] + v[:-1]) / 2) * (T_IDXS[1:] - T_IDXS[:-1])
+    x = np.cumsum(np.insert(xforward, 0, x[0]))
     self.yref[:,1] = x
     self.yref[:,2] = v
     self.yref[:,3] = a
@@ -394,13 +397,9 @@ class LongitudinalMpc:
     self.params[:,3] = np.copy(self.prev_a)
     self.params[:,4] = self.desired_TR  # shane
 
-    if self.lo_timer%50 == 0:
-      print('x       ={}'.format(x))
-      print('stopline={}'.format(stopline))
-      print('cruise  ={}'.format(cruise_target))
-      print('lead0   ={}'.format(lead_0_obstacle - (3/4) * get_safe_obstacle_distance(v)))
-      print('lead0   ={}'.format(lead_1_obstacle - (3/4) * get_safe_obstacle_distance(v)))
-      print('m_prob  ={}'.format(model.stopLine.prob))
+    str_log = 'x={:.3f}/{:.3f}/{:.3f} s={:.3f}/{:.3f}/{:.3f} c={:.3f}/{:.3f}/{:.3f} p={:.1f}'.format(x[0],x[1],x[12],
+     stopline[0],stopline[1],stopline[12], cruise_target[0],cruise_target[1],cruise_target[12], model.stopLine.prob)
+    trace1.printf3('{}'.format(str_log))
 
     self.yref[:,1] = np.min(x_targets, axis=1)
     for i in range(N):
