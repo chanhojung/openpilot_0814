@@ -18,6 +18,7 @@ from casadi import SX, vertcat
 
 from common.params import Params
 from decimal import Decimal
+import common.log as trace1
 
 MODEL_NAME = 'long'
 LONG_MPC_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -396,13 +397,9 @@ class LongitudinalMpc:
     self.params[:,3] = np.copy(self.prev_a)
     self.params[:,4] = self.desired_TR  # shane
 
-    if self.lo_timer%50 == 0:
-      print('x       ={}'.format(x))
-      print('stopline={}'.format(stopline))
-      print('cruise  ={}'.format(cruise_target))
-      print('lead0   ={}'.format(lead_0_obstacle - (3/4) * get_safe_obstacle_distance(v)))
-      print('lead0   ={}'.format(lead_1_obstacle - (3/4) * get_safe_obstacle_distance(v)))
-      print('m_prob  ={}'.format(model.stopLine.prob))
+    str_log = 'x={:.3f}/{:.3f}/{:.3f} s={:.3f}/{:.3f}/{:.3f} c={:.3f}/{:.3f}/{:.3f} p={:.1f}'.format(x[0],x[1],x[12],
+     stopline[0],stopline[1],stopline[12], cruise_target[0],cruise_target[1],cruise_target[12], model.stopLine.prob)
+    trace1.printf3('{}'.format(str_log))
 
     self.yref[:,1] = np.min(x_targets, axis=1)
     for i in range(N):
