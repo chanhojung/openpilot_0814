@@ -17,17 +17,4 @@ if [ "$?" == "0" ]; then
     echo $REMOVED_BRANCH | xargs git branch -D
     sed -i "/$REMOVED_BRANCH/d" .git/config
   fi
-  BRANCH=$(git rev-parse --abbrev-ref HEAD)
-  HASH=$(git rev-parse HEAD)
-  /data/data/com.termux/files/usr/bin/git fetch
-  REMOTE_HASH=$(git rev-parse --verify origin/$BRANCH)
-  /data/data/com.termux/files/usr/bin/git pull origin $BRANCH
-
-  if [ "$HASH" != "$REMOTE_HASH" ]; then
-    if [ -f "/data/openpilot/prebuilt" ]; then
-      pkill -f thermald
-      rm -f /data/openpilot/prebuilt
-    fi
-    reboot
-  fi
 fi

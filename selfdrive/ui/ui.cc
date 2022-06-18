@@ -498,6 +498,7 @@ static void update_status(UIState *s) {
     s->scene.osm_enabled = params.getBool("OSMEnable") || params.getBool("OSMSpeedLimitEnable") || std::stoi(params.get("CurvDecelOption")) == 1 || std::stoi(params.get("CurvDecelOption")) == 3;
     s->scene.animated_rpm = params.getBool("AnimatedRPM");
     s->scene.stop_line = params.getBool("ShowStopLine");
+    s->scene.lateralControlMethod = std::stoi(params.get("LateralControlMethod"));
 
     if (s->scene.autoScreenOff > 0) {
       s->scene.nTime = s->scene.autoScreenOff * 60 * UI_FREQ;
