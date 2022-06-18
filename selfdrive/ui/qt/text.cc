@@ -30,7 +30,7 @@ int main(int argc, char *argv[]) {
   label->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::MinimumExpanding);
   ScrollView *scroll = new ScrollView(label);
   scroll->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-  main_layout->addWidget(scroll, 0, 0, Qt::AlignTop);
+  main_layout->addWidget(scroll, 0, 0, 1, 4, Qt::AlignTop);
 
   // Scroll to the bottom
   QObject::connect(scroll->verticalScrollBar(), &QAbstractSlider::rangeChanged, [=]() {
@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
   }
   label2->setText(device_ip);
   label2->setStyleSheet("color: #e0e879");
-  main_layout->addWidget(label2, 0, 0, Qt::AlignRight | Qt::AlignTop);
+  main_layout->addWidget(label2, 0, 0, 1, 4, Qt::AlignRight | Qt::AlignTop);
   btn->setText("Update");
   btn2->setText("MixPlorer");
   btn3->setText("Restore");
@@ -76,14 +76,18 @@ int main(int argc, char *argv[]) {
     btn4->setEnabled(false);
     QProcess::execute("/data/openpilot/selfdrive/assets/addon/script/git_reset.sh");
   });
-  main_layout->addWidget(btn2, 1, 0, Qt::AlignLeft | Qt::AlignBottom);
-  main_layout->addWidget(btn3, 1, 0, Qt::AlignCenter | Qt::AlignBottom);
-  main_layout->addWidget(btn4, 1, 0, Qt::AlignCenter | Qt::AlignBottom);
+  btn2->setFixedSize(400, 150);
+  btn3->setFixedSize(400, 150);
+  btn4->setFixedSize(400, 150);
+  main_layout->addWidget(btn2, 1, 0, 1, 1, Qt::AlignCenter | Qt::AlignBottom);
+  main_layout->addWidget(btn3, 1, 1, 1, 1, Qt::AlignCenter | Qt::AlignBottom);
+  main_layout->addWidget(btn4, 1, 2, 1, 1, Qt::AlignCenter | Qt::AlignBottom);
 #else
   btn->setText("Exit");
   QObject::connect(btn, &QPushButton::clicked, &a, &QApplication::quit);
 #endif
-  main_layout->addWidget(btn, 1, 0, Qt::AlignRight | Qt::AlignBottom);
+  btn->setFixedSize(400, 150);
+  main_layout->addWidget(btn, 1, 3, 1, 1, Qt::AlignCenter | Qt::AlignBottom);
 
   window.setStyleSheet(R"(
     * {
@@ -94,8 +98,8 @@ int main(int argc, char *argv[]) {
     }
     QPushButton {
       padding: 40px;
-      padding-right: 80px;
-      padding-left: 80px;
+      padding-right: 40px;
+      padding-left: 40px;
       border: 2px solid white;
       border-radius: 20px;
       margin-right: 30px;
