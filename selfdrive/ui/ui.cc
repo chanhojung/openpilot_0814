@@ -328,11 +328,21 @@ static void update_state(UIState *s) {
   if (sm.updated("longitudinalPlan")) {
     scene.longitudinal_plan = sm["longitudinalPlan"].getLongitudinalPlan();
     auto lop_data = sm["longitudinalPlan"].getLongitudinalPlan();
-    scene.longitudinalPlan.e2ex = lop_data.getE2eX();
-    scene.longitudinalPlan.lead0 = lop_data.getLead0Obstacle();
-    scene.longitudinalPlan.lead1 = lop_data.getLead1Obstacle();
-    scene.longitudinalPlan.cruisetg = lop_data.getCruiseTarget();
-    scene.longitudinalPlan.stopline = lop_data.getStopLine();
+    for (int i = 0; i < std::size(scene.longitudinalPlan.e2ex); i++) {
+      scene.longitudinalPlan.e2ex[i] = lop_data.getE2eX()[i];
+    }
+    for (int i = 0; i < std::size(scene.longitudinalPlan.lead0); i++) {
+      scene.longitudinalPlan.lead0[i] = lop_data.getLead0Obstacle()[i];
+    }
+    for (int i = 0; i < std::size(scene.longitudinalPlan.lead1); i++) {
+      scene.longitudinalPlan.lead1[i] = lop_data.getLead1Obstacle()[i];
+    }
+    for (int i = 0; i < std::size(scene.longitudinalPlan.cruisetg); i++) {
+      scene.longitudinalPlan.cruisetg[i] = lop_data.getCruiseTarget()[i];
+    }
+    for (int i = 0; i < std::size(scene.longitudinalPlan.stopline); i++) {
+      scene.longitudinalPlan.stopline[i] = lop_data.getStopLine()[i];
+    }
     scene.longitudinalPlan.stopprob = lop_data.getStoplineProb();
   }
   // opkr
