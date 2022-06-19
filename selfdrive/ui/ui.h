@@ -337,11 +337,11 @@ typedef struct UIScene {
 
   struct _LongitudinalPlan
   {
-    float e2ex[13];
-    float lead0[13];
-    float lead1[13];
-    float cruisetg[13];
-    float stopline[13];
+    float e2ex[12];
+    float lead0[12];
+    float lead1[12];
+    float cruisetg[12];
+    float stopline[12];
     float stopprob;
   } longitudinalPlan;
 
