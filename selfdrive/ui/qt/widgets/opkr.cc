@@ -392,6 +392,7 @@ BranchSelectCombo::BranchSelectCombo() : AbstractControl("", "", "")
         QString tcmd1 = "git -C /data/openpilot fetch --progress origin";
         QProcess::execute("git -C /data/openpilot clean -d -f -f");
         QProcess::execute(cmd1);
+        QProcess::execute("/data/openpilot/selfdrive/assets/addon/script/git_remove.sh");
         textMsgProcess1 = new QProcess(this);
         outbox1 = new QMessageBox(this);
         outbox1->setStyleSheet("QLabel{min-width:800px; font-size: 50px;}");

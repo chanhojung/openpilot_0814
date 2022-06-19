@@ -262,7 +262,7 @@ void HomeWindow::mousePressMULTI(QMouseEvent* e, int nDir) {
     Params().put("ActuatorEffectiveness", value.toStdString());
   } else if (nMenuPos == 8) {
     QUIState::ui_state.scene.lqrScale += 50*nDir;
-    clip(QUIState::ui_state.scene.lqrScale, 1, 50);
+    clip(QUIState::ui_state.scene.lqrScale, 50, 5000);
     QString value = QString::number(QUIState::ui_state.scene.lqrScale);
     Params().put("Scale", value.toStdString());
   } else if (nMenuPos == 9) {

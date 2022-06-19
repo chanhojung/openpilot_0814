@@ -173,7 +173,6 @@ class CarController():
     self.vFuture = 0
     self.vFutureA = 0
     self.cruise_init = False
-    self.keep_decel_on = False
     self.change_accel_fast = False
 
     self.to_avoid_lkas_fault_enabled = self.params.get_bool("AvoidLKASFaultEnabled")
@@ -854,26 +853,17 @@ class CarController():
         elif self.radar_helper_option == 3:
           if 0 < CS.lead_distance <= 149:
             stock_weight = 0.0
-            if accel < 0 and self.keep_decel_on:
-              if aReqValue <= accel:
-                self.keep_decel_on = False
-              else:
-                accel = (aReqValue + accel) / 2
-            elif accel < 0 and (self.NC.cut_in or abs(accel) - abs(aReqValue) > 0.3):
-              self.keep_decel_on = True
-            elif accel > 0 and self.change_accel_fast:
+            if accel > 0 and self.change_accel_fast and CS.out.vEgo < 11.:
               if aReqValue >= accel:
                 self.change_accel_fast = False
               else:
                 accel = (aReqValue + accel) / 2
-            elif aReqValue < 0 and accel > 0 and accel - aReqValue > 0.3 and lead_objspd > 0:
+            elif aReqValue < 0 and accel > 0 and accel - aReqValue > 0.3 and lead_objspd > 0 and CS.out.vEgo < 11.:
               self.change_accel_fast = True
             elif CS.lead_distance < 30.0 and aReqValue > 0.8 and lead_objspd > 0 and aReqValue - accel > 0.8:
               accel = (aReqValue + accel) / 3
-              self.keep_decel_on = False
               self.change_accel_fast = False
             elif 0.1 < self.dRel <= 10.0 and CS.lead_distance - self.dRel >= 5.0 and aReqValue >= 0:
-              self.keep_decel_on = False
               self.change_accel_fast = False
               pass
             elif aReqValue > 0.0:
@@ -882,17 +872,16 @@ class CarController():
               if CS.lead_distance < 2.0:
                 accel = self.accel - (DT_CTRL * 5.0)
               elif CS.lead_distance < self.stoppingdist:
-                accel = self.accel - (DT_CTRL * interp(CS.out.vEgo, [0.5, 2.0], [2.0, 5.0]))
+                accel = self.accel - (DT_CTRL * interp(CS.out.vEgo, [0.5, 2.0], [1.0, 5.0]))
             elif aReqValue < 0.0 and self.stopping_dist_adj_enabled:
-              stock_weight = interp(abs(lead_objspd), [1.0, 4.0, 6.0, 20.0, 50.0], [0.2, 0.4, 1.0, 1.0, 0.1])
+              stock_weight = interp(abs(lead_objspd), [1.0, 4.0, 6.0, 20.0, 50.0], [0.2, 0.4, 1.0, 0.9, 0.2])
               accel = accel * (1.0 - stock_weight) + aReqValue * stock_weight
-              accel = min(accel, -0.4) if CS.lead_distance <= 4.5 and not CS.out.standstill else accel
+              accel = min(accel, -0.5) if CS.lead_distance <= 4.5 and not CS.out.standstill else accel
             elif aReqValue < 0.0:
               stock_weight = interp(CS.lead_distance, [6.0, 10.0, 18.0, 25.0, 32.0], [1.0, 0.85, 1.0, 0.4, 1.0])
               accel = accel * (1.0 - stock_weight) + aReqValue * stock_weight
             else:
               stock_weight = 0.0
-              self.keep_decel_on = False
               self.change_accel_fast = False
               accel = accel * (1.0 - stock_weight) + aReqValue * stock_weight
           elif 0.1 < self.dRel < 6.0 and int(self.vRel*3.6) < 0:

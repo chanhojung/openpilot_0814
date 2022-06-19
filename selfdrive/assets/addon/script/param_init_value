@@ -96,10 +96,10 @@ DynamicTRSpd:0,20,40,60,110
 DynamicTRSet:1.3,1.4,1.5,1.6,1.7
 CustomTREnabled:0
 LCTimingFactorUD:1
-LCTimingFactor30:10
-LCTimingFactor60:20
-LCTimingFactor80:70
-LCTimingFactor110:100
+LCTimingFactor30:30
+LCTimingFactor60:70
+LCTimingFactor80:90
+LCTimingFactor110:120
 OpkrUIBrightnessOff:10
 LCTimingFactorEnable:1
 AutoEnableSpeed:3
