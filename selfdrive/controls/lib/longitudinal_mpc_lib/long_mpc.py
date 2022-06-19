@@ -224,11 +224,11 @@ class LongitudinalMpc:
 
     self.lo_timer = 0 
 
-    self.lead_0_obstacle = np.zeros(N+1)
-    self.lead_1_obstacle = np.zeros(N+1)
-    self.x_e2e = np.zeros(N+1)
-    self.cruisetarget = np.zeros(N+1)
-    self.stopline = np.zeros(N+1)
+    self.lead_0_obstacle = [0 for i in range(13)]
+    self.lead_1_obstacle = [0 for i in range(13)]
+    self.x_e2e = [0 for i in range(13)]
+    self.cruisetarget = [0 for i in range(13)]
+    self.stopline = [0 for i in range(13)]
     self.stop_prob = 0.0
 
   def reset(self):
@@ -404,7 +404,6 @@ class LongitudinalMpc:
     self.params[:,3] = np.copy(self.prev_a)
     self.params[:,4] = self.desired_TR  # shane
 
-    print(type(x))
     self.e2e_x = x
     self.lead_0_obstacle = lead_0_obstacle
     self.lead_1_obstacle = lead_1_obstacle
