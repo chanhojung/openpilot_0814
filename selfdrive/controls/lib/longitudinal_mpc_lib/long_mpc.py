@@ -224,11 +224,11 @@ class LongitudinalMpc:
 
     self.lo_timer = 0 
 
-    self.lead_0_obstacle = np.zeros(13)
-    self.lead_1_obstacle = np.zeros(13)
-    self.e2e_x = np.zeros(13)
-    self.cruise_target = np.zeros(13)
-    self.stopline = np.zeros(13)
+    self.lead_0_obstacle = np.zeros(13, dtype=np.float64)
+    self.lead_1_obstacle = np.zeros(13, dtype=np.float64)
+    self.e2e_x = np.zeros(13, dtype=np.float64)
+    self.cruise_target = np.zeros(13, dtype=np.float64)
+    self.stopline = np.zeros(13, dtype=np.float64)
     self.stop_prob = 0.0
 
   def reset(self):
