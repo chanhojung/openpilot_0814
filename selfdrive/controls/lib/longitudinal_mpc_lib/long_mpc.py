@@ -227,7 +227,7 @@ class LongitudinalMpc:
     self.lead_0_obstacle = [0 for i in range(13)]
     self.lead_1_obstacle = [0 for i in range(13)]
     self.e2e_x = [0 for i in range(13)]
-    self.cruisetarget = [0 for i in range(13)]
+    self.cruise_target = [0 for i in range(13)]
     self.stopline = [0 for i in range(13)]
     self.stop_prob = 0.0
 
