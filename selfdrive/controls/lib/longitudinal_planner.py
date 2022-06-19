@@ -146,11 +146,11 @@ class Planner:
     longitudinalPlan.dynamicTRMode = int(self.mpc.dynamic_TR_mode)
     longitudinalPlan.dynamicTRValue = float(self.mpc.desired_TR)
 
-    longitudinalPlan.e2eX = self.mpc.e2e_x
-    longitudinalPlan.lead0Obstacle = self.mpc.lead_0_obstacle
-    longitudinalPlan.lead1Obstacle = self.mpc.lead_1_obstacle
-    longitudinalPlan.cruiseTarget = self.mpc.cruise_target
-    longitudinalPlan.stopLine = self.mpc.stopline
+    longitudinalPlan.e2eX = list(self.mpc.e2e_x)
+    longitudinalPlan.lead0Obstacle = list(self.mpc.lead_0_obstacle)
+    longitudinalPlan.lead1Obstacle = list(self.mpc.lead_1_obstacle)
+    longitudinalPlan.cruiseTarget = list(self.mpc.cruise_target)
+    longitudinalPlan.stopLine = list(self.mpc.stopline)
     longitudinalPlan.stoplineProb = self.mpc.stop_prob
 
     pm.send('longitudinalPlan', plan_send)
