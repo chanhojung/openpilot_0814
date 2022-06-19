@@ -404,6 +404,7 @@ class LongitudinalMpc:
     self.params[:,3] = np.copy(self.prev_a)
     self.params[:,4] = self.desired_TR  # shane
 
+    print(type(x))
     self.e2e_x = x
     self.lead_0_obstacle = lead_0_obstacle
     self.lead_1_obstacle = lead_1_obstacle
