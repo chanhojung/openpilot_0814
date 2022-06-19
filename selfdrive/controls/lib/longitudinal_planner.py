@@ -138,7 +138,7 @@ class Planner:
     longitudinalPlan.jerks = self.j_desired_trajectory.tolist()
 
     longitudinalPlan.hasLead = sm['radarState'].leadOne.status
-    #longitudinalPlan.longitudinalPlanSource = self.mpc.source
+    longitudinalPlan.longitudinalPlanSource = self.mpc.source
     longitudinalPlan.fcw = self.fcw
 
     longitudinalPlan.solverExecutionTime = self.mpc.solve_time
@@ -146,6 +146,11 @@ class Planner:
     longitudinalPlan.dynamicTRMode = int(self.mpc.dynamic_TR_mode)
     longitudinalPlan.dynamicTRValue = float(self.mpc.desired_TR)
 
-    longitudinalPlan.solverExecutionTime = self.mpc.solve_time
+    longitudinalPlan.e2eX = self.mpc.e2e_x.tolist()
+    longitudinalPlan.lead0Obstacle = self.mpc.lead_0_obstacle.tolist()
+    longitudinalPlan.lead1Obstacle = self.mpc.lead_1_obstacle.tolist()
+    longitudinalPlan.cruiseTarget = self.mpc.cruise_target.tolist()
+    longitudinalPlan.stopLine = self.mpc.stopline.tolist()
+    longitudinalPlan.stoplineProb = self.mpc.stop_prob
 
     pm.send('longitudinalPlan', plan_send)

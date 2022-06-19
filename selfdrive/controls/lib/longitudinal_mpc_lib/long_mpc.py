@@ -25,7 +25,7 @@ LONG_MPC_DIR = os.path.dirname(os.path.abspath(__file__))
 EXPORT_DIR = os.path.join(LONG_MPC_DIR, "c_generated_code")
 JSON_FILE = os.path.join(LONG_MPC_DIR, "acados_ocp_long.json")
 
-SOURCES = ['lead0', 'lead1', 'stop', 'cruise']
+SOURCES = ['e2e', 'lead0', 'lead1', 'cruise', 'stop']
 
 X_DIM = 3
 U_DIM = 1
@@ -224,6 +224,13 @@ class LongitudinalMpc:
 
     self.lo_timer = 0 
 
+    self.lead_0_obstacle = np.zeros(13, dtype=np.float64)
+    self.lead_1_obstacle = np.zeros(13, dtype=np.float64)
+    self.e2e_x = np.zeros(13, dtype=np.float64)
+    self.cruise_target = np.zeros(13, dtype=np.float64)
+    self.stopline = np.zeros(13, dtype=np.float64)
+    self.stop_prob = 0.0
+
   def reset(self):
     # self.solver = AcadosOcpSolverCython(MODEL_NAME, ACADOS_SOLVER_TYPE, N)
     self.solver.reset()
@@ -392,14 +399,17 @@ class LongitudinalMpc:
                                 lead_0_obstacle - (3/4) * get_safe_obstacle_distance(v),
                                 lead_1_obstacle - (3/4) * get_safe_obstacle_distance(v),
                                 cruise_target])
-    #self.source = SOURCES[np.argmin(x_obstacles[0])]
+    self.source = SOURCES[np.argmin(x_targets[0])]
     self.params[:,2] = 1e3
     self.params[:,3] = np.copy(self.prev_a)
     self.params[:,4] = self.desired_TR  # shane
 
-    str_log = 'x={:.3f}/{:.3f}/{:.3f} s={:.3f}/{:.3f}/{:.3f} c={:.3f}/{:.3f}/{:.3f} p={:.1f}'.format(x[0],x[1],x[12],
-     stopline[0],stopline[1],stopline[12], cruise_target[0],cruise_target[1],cruise_target[12], model.stopLine.prob)
-    trace1.printf3('{}'.format(str_log))
+    self.e2e_x = x[:]
+    self.lead_0_obstacle = lead_0_obstacle[:]
+    self.lead_1_obstacle = lead_1_obstacle[:]
+    self.cruise_target = cruise_target[:]
+    self.stopline = stopline[:]
+    self.stop_prob = model.stopLine.prob
 
     self.yref[:,1] = np.min(x_targets, axis=1)
     for i in range(N):
