@@ -224,11 +224,11 @@ class LongitudinalMpc:
 
     self.lo_timer = 0 
 
-    self.lead_0_obstacle = [0 for i in range(13)]
-    self.lead_1_obstacle = [0 for i in range(13)]
-    self.e2e_x = [0 for i in range(13)]
-    self.cruise_target = [0 for i in range(13)]
-    self.stopline = [0 for i in range(13)]
+    self.lead_0_obstacle = np.zeros(13)
+    self.lead_1_obstacle = np.zeros(13)
+    self.e2e_x = np.zeros(13)
+    self.cruise_target = np.zeros(13)
+    self.stopline = np.zeros(13)
     self.stop_prob = 0.0
 
   def reset(self):
@@ -404,16 +404,11 @@ class LongitudinalMpc:
     self.params[:,3] = np.copy(self.prev_a)
     self.params[:,4] = self.desired_TR  # shane
 
-    for i in range(13):
-      self.e2e_x[i] = x[i]
-    for i in range(13):
-      self.lead_0_obstacle[i] = lead_0_obstacle[i]
-    for i in range(13):
-      self.lead_1_obstacle[i] = lead_1_obstacle[i]
-    for i in range(13):
-      self.cruise_target[i] = cruise_target[i]
-    for i in range(13):
-      self.stopline[i] = stopline[i]
+    self.e2e_x = x[:]
+    self.lead_0_obstacle = lead_0_obstacle[:]
+    self.lead_1_obstacle = lead_1_obstacle[:]
+    self.cruise_target = cruise_target[:]
+    self.stopline = stopline[:]
     self.stop_prob = model.stopLine.prob
 
     self.yref[:,1] = np.min(x_targets, axis=1)
