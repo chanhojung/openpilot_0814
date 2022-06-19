@@ -325,6 +325,16 @@ static void update_state(UIState *s) {
     scene.lateralPlan.lanelessModeStatus = lp_data.getLanelessMode();
     scene.lateralPlan.totalCameraOffset = lp_data.getTotalCameraOffset();
   }
+  if (sm.updated("longitudinalPlan")) {
+    scene.longitudinal_plan = sm["longitudinalPlan"].getLongitudinalPlan();
+    auto lop_data = sm["longitudinalPlan"].getLongitudinalPlan();
+    scene.longitudinalPlan.e2ex = lop_data.getE2eX();
+    scene.longitudinalPlan.lead0 = lop_data.getLead0Obstacle();
+    scene.longitudinalPlan.lead1 = lop_data.getLead1Obstacle();
+    scene.longitudinalPlan.cruisetg = lop_data.getCruiseTarget();
+    scene.longitudinalPlan.stopline = lop_data.getStopLine();
+    scene.longitudinalPlan.stopprob = lop_data.getStoplineProb();
+  }
   // opkr
   if (sm.updated("liveNaviData")) {
     scene.live_navi_data = sm["liveNaviData"].getLiveNaviData();
@@ -538,7 +548,7 @@ QUIState::QUIState(QObject *parent) : QObject(parent) {
   ui_state.sm = std::make_unique<SubMaster, const std::initializer_list<const char *>>({
     "modelV2", "controlsState", "liveCalibration", "radarState", "deviceState", "roadCameraState",
     "pandaState", "carParams", "driverMonitoringState", "sensorEvents", "carState", "liveLocationKalman",
-    "ubloxGnss", "gpsLocationExternal", "liveParameters", "lateralPlan", "liveNaviData", "liveMapData",
+    "ubloxGnss", "gpsLocationExternal", "liveParameters", "lateralPlan", "liveNaviData", "liveMapData", "longitudinalPlan",
   });
 
   Params params;

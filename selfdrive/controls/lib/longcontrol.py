@@ -187,16 +187,14 @@ class LongControl():
     else:
       self.long_stat = "---"
 
-    if long_plan.longitudinalPlanSource == LongitudinalPlanSource.cruise:
-      self.long_plan_source = "cruise"
+    if long_plan.longitudinalPlanSource == LongitudinalPlanSource.e2e:
+      self.long_plan_source = "e2e"
     elif long_plan.longitudinalPlanSource == LongitudinalPlanSource.lead0:
       self.long_plan_source = "lead0"
     elif long_plan.longitudinalPlanSource == LongitudinalPlanSource.lead1:
       self.long_plan_source = "lead1"
-    elif long_plan.longitudinalPlanSource == LongitudinalPlanSource.lead2:
-      self.long_plan_source = "lead2"
-    elif long_plan.longitudinalPlanSource == LongitudinalPlanSource.e2e:
-      self.long_plan_source = "e2e"
+    elif long_plan.longitudinalPlanSource == LongitudinalPlanSource.cruise:
+      self.long_plan_source = "cruise"
     elif long_plan.longitudinalPlanSource == LongitudinalPlanSource.stop:
       self.long_plan_source = "stop"
     else:

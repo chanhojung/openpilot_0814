@@ -259,6 +259,7 @@ typedef struct UIScene {
   cereal::LateralPlan::Reader lateral_plan;
   cereal::LiveNaviData::Reader live_navi_data;
   cereal::LiveMapData::Reader live_map_data;
+  cereal::LongitudinalPlan::Reader longitudinal_plan;
 
   // gps
   int satelliteCount;
@@ -333,6 +334,17 @@ typedef struct UIScene {
     //float turnSpeedLimitsAheadDistances[16]; // List
     //int turnSpeedLimitsAheadSigns[16]; // List
   } liveMapData;
+
+  struct _LongitudinalPlan
+  {
+    float e2ex[13];
+    float lead0[13];
+    float lead1[13];
+    float cruisetg[13];
+    float stopline[13];
+    float stopprob;
+  } longitudinalPlan;
+
 } UIScene;
 
 typedef struct UIState {
