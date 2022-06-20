@@ -9,6 +9,7 @@ from selfdrive.car.hyundai.values import CAR
 from common.conversions import Conversions as CV
 from common.params import Params
 from decimal import Decimal
+from selfdrive.controls.lib.longitudinal_mpc_lib.long_mpc import LongitudinalMpc
 
 import common.log as trace1
 LongitudinalPlanSource = log.LongitudinalPlan.LongitudinalPlanSource
@@ -72,6 +73,7 @@ class LongControl():
     self.damping_timer3 = 1.0
     self.damping_timer = 0
     self.loc_timer = 0
+
 
   def reset(self, v_pid):
     """Reset PID controller and change setpoint"""
@@ -168,9 +170,9 @@ class LongControl():
       # Keep applying brakes until the car is stopped
       if not CS.standstill or output_accel > CP.stopAccel:
         output_accel -= CP.stoppingDecelRate * DT_CTRL
-      elif CS.standstill and CS.cruiseState.standstill and output_accel <= -0.5:
-        output_accel = -0.5
-      elif CS.standstill and output_accel < -0.5: # loosen brake at standstill, to mitigate load of brake
+      elif CS.standstill and CS.cruiseState.standstill and output_accel <= -0.7:
+        output_accel = -0.7
+      elif CS.standstill and output_accel < -0.7: # loosen brake at standstill, to mitigate load of brake
         output_accel += CP.stoppingDecelRate * DT_CTRL
       output_accel = clip(output_accel, accel_limits[0], accel_limits[1])
       self.reset(CS.vEgo)
@@ -187,16 +189,12 @@ class LongControl():
     else:
       self.long_stat = "---"
 
-    if long_plan.longitudinalPlanSource == LongitudinalPlanSource.cruise:
-      self.long_plan_source = "cruise"
-    elif long_plan.longitudinalPlanSource == LongitudinalPlanSource.lead0:
+    if long_plan.longitudinalPlanSource == LongitudinalPlanSource.lead0:
       self.long_plan_source = "lead0"
     elif long_plan.longitudinalPlanSource == LongitudinalPlanSource.lead1:
       self.long_plan_source = "lead1"
-    elif long_plan.longitudinalPlanSource == LongitudinalPlanSource.lead2:
-      self.long_plan_source = "lead2"
-    elif long_plan.longitudinalPlanSource == LongitudinalPlanSource.e2e:
-      self.long_plan_source = "e2e"
+    elif long_plan.longitudinalPlanSource == LongitudinalPlanSource.cruise:
+      self.long_plan_source = "cruise"
     elif long_plan.longitudinalPlanSource == LongitudinalPlanSource.stop:
       self.long_plan_source = "stop"
     else:

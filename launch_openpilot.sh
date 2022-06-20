@@ -33,6 +33,16 @@ if [ ! -f "/system/fonts/KaiGenGothicKR-Normal.ttf" ]; then
     chmod 644 /system/etc/fonts.xml
     chmod 644 /system/fonts/KaiGenGothicKR*
     mount -o remount,r /system
+fi
+
+if [ ! -f "/system/fonts/NotoSansArabic-Regular.ttf" ]; then
+    sleep 3
+    mount -o remount,rw /system
+    cp -rf /data/openpilot/selfdrive/assets/addon/font/NotoSansArabic* /system/fonts/
+    cp -rf /data/openpilot/selfdrive/assets/addon/font/fonts.xml /system/etc/fonts.xml
+    chmod 644 /system/etc/fonts.xml
+    chmod 644 /system/fonts/NotoSansArabic*
+    mount -o remount,r /system
     reboot
 fi
 
@@ -45,6 +55,14 @@ if [ -f "/data/bootanimation.zip" ]; then
         chmod 644 /system/media/bootanimation.zip
         mount -o remount,r /system
     fi
+fi
+
+if [ ! -f "/data/openpilot/selfdrive/modeld/models/supercombo.dlc" ]; then
+    cat /data/openpilot/selfdrive/modeld/models/supercombo.dlca* > /data/openpilot/selfdrive/modeld/models/supercombo.dlc
+fi
+
+if [ ! -f "/data/openpilot/selfdrive/modeld/models/supercombo.onnx" ]; then
+    cat /data/openpilot/selfdrive/modeld/models/supercombo.onnxa* > /data/openpilot/selfdrive/modeld/models/supercombo.onnx
 fi
 
 export PASSIVE="0"

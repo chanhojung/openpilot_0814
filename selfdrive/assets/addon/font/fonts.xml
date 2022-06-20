@@ -335,7 +335,7 @@
         <font weight="400" style="normal">NotoSansSymbols-Regular-Subsetted.ttf</font>
     </family>
     <family lang="ko">
-        <font weight="400" style="normal">KaiGenGothicKR-Normal</font>
+        <font weight="400" style="normal">KaiGenGothicKR-Normal.ttf</font>
         <font weight="500" style="normal">KaiGenGothicKR-Medium.ttf</font>
         <font weight="700" style="normal">KaiGenGothicKR-Bold.ttf</font>
     </family>
@@ -350,6 +350,11 @@
     </family>
     <family lang="ja">
         <font weight="400" style="normal">MTLmr3m.ttf</font>
+    </family>
+    <family lang="ar">
+        <font weight="400" style="normal">NotoSansArabic-Regular.ttf</font>
+        <font weight="500" style="normal">NotoSansArabic-Medium.ttf</font>
+        <font weight="700" style="normal">NotoSansArabic-Bold.ttf</font>
     </family>
     <!--
         Tai Le and Mongolian are intentionally kept last, to make sure they don't override

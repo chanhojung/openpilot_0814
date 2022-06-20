@@ -165,7 +165,8 @@ class CarController():
     self.osm_spdlimit_enabled = self.params.get_bool("OSMSpeedLimitEnable")
     self.stock_safety_decel_enabled = self.params.get_bool("UseStockDecelOnSS")
     self.joystick_debug_mode = self.params.get_bool("JoystickDebugMode")
-    self.stop_line_enabled = self.params.get_bool("ShowStopLine")
+    self.e2e_long_enabled = self.params.get_bool("E2ELong")
+    self.stopsign_enabled = self.params.get_bool("StopAtStopSign")
 
     self.cc_timer = 0
     self.on_speed_control = False
@@ -900,14 +901,14 @@ class CarController():
               self.stopped = True
             else:
               self.stopped = False
-          elif 0.1 < self.dRel < 90:
+          elif 0.1 < self.dRel < 80:
             self.stopped = False
             pass
           else:
             self.stopped = False
-            if self.stop_line_enabled:
+            if self.e2e_long_enabled or self.stopsign_enabled:
               if self.sm['longitudinalPlan'].longitudinalPlanSource == LongitudinalPlanSource.stop:
-                pass
+                accel = faccel
               else:
                 accel = aReqValue
             else:
@@ -952,7 +953,7 @@ class CarController():
     setSpeed = round(set_speed * CV.MS_TO_KPH)
     # str_log1 = 'MD={}  BS={:1.0f}/{:1.0f}  CV={:03.0f}/{:0.4f}  TQ={:03.0f}/{:03.0f}/{:03.0f}  ST={:03.0f}/{:01.0f}/{:01.0f}  FR={:03.0f}'.format(
     #   CS.out.cruiseState.modeSel, CS.CP.mdpsBus, CS.CP.sccBus, self.model_speed, abs(self.sm['controlsState'].curvature), abs(new_steer), abs(CS.out.steeringTorque), abs(apply_steer), self.p.STEER_MAX, self.p.STEER_DELTA_UP, self.p.STEER_DELTA_DOWN, self.timer1.sampleTime())
-    str_log1 = 'CV={:03.0f} TQ={:03.0f} SMax={:03.0f}'.format(self.model_speed, abs(new_steer), self.p.STEER_MAX)
+    str_log1 = 'CV={:03.0f} VF={:03.0f} TQ={:03.0f} SMax={:03.0f}'.format(self.model_speed, v_future, abs(new_steer), self.p.STEER_MAX)
     if CS.out.cruiseState.accActive:
       str_log2 = 'AQ={:+04.2f}  VF={:03.0f}/{:03.0f}  TS={:03.0f}  SS/VS={:03.0f}/{:03.0f}  RD/LD={:04.1f}/{:03.1f}  CG={:1.0f}  FR={:03.0f}'.format(
        self.aq_value if self.longcontrol else CS.scc12["aReqValue"], v_future, v_future_a, self.NC.ctrl_speed , setSpeed, round(CS.VSetDis), CS.lead_distance, self.last_lead_distance, CS.cruiseGapSet, self.timer1.sampleTime())
@@ -961,19 +962,21 @@ class CarController():
        CS.out.steerFaultTemporary, CS.lkas_button_on, 0 < CS.lead_distance < 149, self.aq_value if self.longcontrol else CS.scc12["aReqValue"], v_future, v_future_a, CS.cruiseGapSet, self.timer1.sampleTime())
     trace1.printf2( '{}'.format( str_log2 ) )
 
-    str_log3 = 'V/D/R/A/M/G={:.1f}/{:.1f}/{:.1f}/{:.2f}/{:.1f}/{:1.0f}'.format(CS.clu_Vanz, CS.lead_distance, CS.lead_objspd, CS.scc12["aReqValue"], self.stoppingdist, CS.cruiseGapSet)
-    trace1.printf3('{}'.format(str_log3))
+    # str_log3 = 'V/D/R/A/M/G={:.1f}/{:.1f}/{:.1f}/{:.2f}/{:.1f}/{:1.0f}'.format(CS.clu_Vanz, CS.lead_distance, CS.lead_objspd, CS.scc12["aReqValue"], self.stoppingdist, CS.cruiseGapSet)
+    # trace1.printf3('{}'.format(str_log3))
 
     self.cc_timer += 1
     if self.cc_timer > 100:
       self.cc_timer = 0
-      self.radar_helper_option = int(self.params.get("RadarLongHelper", encoding="utf8"))
-      self.stopping_dist_adj_enabled = self.params.get_bool("StoppingDistAdj")
-      self.standstill_res_count = int(self.params.get("RESCountatStandstill", encoding="utf8"))
-      self.opkr_cruisegap_auto_adj = self.params.get_bool("CruiseGapAdjust")
-      self.to_avoid_lkas_fault_enabled = self.params.get_bool("AvoidLKASFaultEnabled")
-      self.to_avoid_lkas_fault_max_angle = int(self.params.get("AvoidLKASFaultMaxAngle", encoding="utf8"))
-      self.to_avoid_lkas_fault_max_frame = int(self.params.get("AvoidLKASFaultMaxFrame", encoding="utf8"))
+      # self.radar_helper_option = int(self.params.get("RadarLongHelper", encoding="utf8"))
+      # self.stopping_dist_adj_enabled = self.params.get_bool("StoppingDistAdj")
+      # self.standstill_res_count = int(self.params.get("RESCountatStandstill", encoding="utf8"))
+      # self.opkr_cruisegap_auto_adj = self.params.get_bool("CruiseGapAdjust")
+      # self.to_avoid_lkas_fault_enabled = self.params.get_bool("AvoidLKASFaultEnabled")
+      # self.to_avoid_lkas_fault_max_angle = int(self.params.get("AvoidLKASFaultMaxAngle", encoding="utf8"))
+      # self.to_avoid_lkas_fault_max_frame = int(self.params.get("AvoidLKASFaultMaxFrame", encoding="utf8"))
+      # self.e2e_long_enabled = self.params.get_bool("E2ELong")
+      # self.stopsign_enabled = self.params.get_bool("StopAtStopSign")
       if self.params.get_bool("OpkrLiveTunePanelEnable"):
         if CS.CP.lateralTuning.which() == 'pid':
           self.str_log2 = 'T={:0.2f}/{:0.3f}/{:0.1f}/{:0.5f}'.format(float(Decimal(self.params.get("PidKp", encoding="utf8"))*Decimal('0.01')), \

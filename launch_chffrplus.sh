@@ -221,6 +221,10 @@ function launch {
   if [ -f "/data/params/d/CurvDecelOption" ]; then
     OSM_CURV_ENABLE=$(cat /data/params/d/CurvDecelOption)
   fi
+  if [ -f "/data/params/d/OSMOfflineUse" ]; then
+    OSM_OFFLINE_ENABLE=$(cat /data/params/d/OSMOfflineUse)
+  fi
+
   if [ -f /EON ]; then
     if [ "$OSM_ENABLE" == "1" ] || [ "$OSM_SL_ENABLE" == "1" ] || [ "$OSM_CURV_ENABLE" == "1" ] || [ "$OSM_CURV_ENABLE" == "3" ]; then
       if [ ! -f "/system/comma/usr/lib/libgfortran.so.5.0.0" ]; then
@@ -235,12 +239,31 @@ function launch {
         tar -zxvf /data/openpilot/selfdrive/mapd/assets/opspline.tar.gz -C /system/comma/usr/lib/python3.8/site-packages/
         mount -o remount,r /system
       fi
+      if [ ! -d "/data/osm" ] && [ "$OSM_OFFLINE_ENABLE" == "1" ]; then
+        sleep 5
+      fi
+      if [ "$OSM_OFFLINE_ENABLE" == "1" ]; then
+        ./build.py && ./custom_dep.py && ./local_osm_install.py && ./manager.py
+      else
+        ./build.py && ./manager.py
+      fi
+    else
+      ./build.py && ./manager.py
     fi
-    ./build.py && ./manager.py
   else
-    ./custom_dep.py && ./build.py && ./manager.py
+    if [ "$OSM_ENABLE" == "1" ] || [ "$OSM_SL_ENABLE" == "1" ] || [ "$OSM_CURV_ENABLE" == "1" ] || [ "$OSM_CURV_ENABLE" == "3" ]; then
+      if [ ! -d "/data/osm" ] && [ "$OSM_OFFLINE_ENABLE" == "1" ]; then
+        sleep 5
+      fi
+      if [ "$OSM_OFFLINE_ENABLE" == "1" ]; then
+        ./build.py && ./custom_dep.py && ./local_osm_install.py && ./manager.py
+      else
+        ./build.py && ./manager.py
+      fi
+    else
+      ./build.py && ./manager.py
+    fi
   fi
-  ./build.py && ./manager.py
 
   # if broken, keep on screen error
   while true; do sleep 1; done
