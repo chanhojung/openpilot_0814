@@ -165,7 +165,6 @@ class CarController():
     self.osm_spdlimit_enabled = self.params.get_bool("OSMSpeedLimitEnable")
     self.stock_safety_decel_enabled = self.params.get_bool("UseStockDecelOnSS")
     self.joystick_debug_mode = self.params.get_bool("JoystickDebugMode")
-    self.e2e_long_enabled = self.params.get_bool("E2ELong")
     self.stopsign_enabled = self.params.get_bool("StopAtStopSign")
 
     self.cc_timer = 0
@@ -906,7 +905,7 @@ class CarController():
             pass
           else:
             self.stopped = False
-            if self.e2e_long_enabled or self.stopsign_enabled:
+            if self.stopsign_enabled:
               if self.sm['longitudinalPlan'].longitudinalPlanSource == LongitudinalPlanSource.stop:
                 accel = faccel
               else:

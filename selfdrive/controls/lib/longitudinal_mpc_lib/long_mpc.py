@@ -284,11 +284,9 @@ class LongitudinalMpc:
       self.solver.cost_set(i, 'Zl', Zl)
 
   def set_weights_for_xva_policy(self):
-    W = np.asfortranarray(np.diag([0., 10., 1., 10., 0.0, 1.]))
+    W = np.asfortranarray(np.diag([0., 0.2, 0.25, 1., 0.0, .1]))
     for i in range(N):
       self.solver.cost_set(i, 'W', W)
-    # Setting the slice without the copy make the array not contiguous,
-    # causing issues with the C interface.
     self.solver.cost_set(N, 'W', np.copy(W[:COST_E_DIM, :COST_E_DIM]))
 
     # Set L2 slack cost on lower bound constraints
@@ -300,7 +298,7 @@ class LongitudinalMpc:
     v_prev = self.x0[1]
     self.x0[1] = v
     self.x0[2] = a
-    if abs(v_prev - v) > 2.: # probably only helps if v < v_prev
+    if abs(v_prev - v) > 2.:  # probably only helps if v < v_prev
       for i in range(0, N+1):
         self.solver.set(i, 'x', self.x0)
 
@@ -352,7 +350,6 @@ class LongitudinalMpc:
     self.lo_timer += 1
     if self.lo_timer > 200:
       self.lo_timer = 0
-      self.e2e = Params().get_bool("E2ELong")
       self.dynamic_TR_mode = int(Params().get("DynamicTRGap", encoding="utf8"))
       self.custom_tr_enabled = Params().get_bool("CustomTREnabled")
 
@@ -361,7 +358,7 @@ class LongitudinalMpc:
     self.yref[:,1] = x
     self.yref[:,2] = v
     self.yref[:,3] = a
-    self.status = radarstate.leadOne.status or radarstate.leadTwo.status or stopping
+    self.status = radarstate.leadOne.status or radarstate.leadTwo.status
 
     lead_xv_0 = self.process_lead(radarstate.leadOne)
     lead_xv_1 = self.process_lead(radarstate.leadTwo)
@@ -395,9 +392,9 @@ class LongitudinalMpc:
     lead_1_obstacle = lead_xv_1[:,0] + get_stopped_equivalence_factor(lead_xv_1[:,1])
 
     stopline = (model.stopLine.x + 6.0) * np.ones(N+1) if stopping else 400 * np.ones(N+1)
+    if stopline[12] < 1.0:
+      stopline = np.ones(13)
 
-    # Fake an obstacle for cruise, this ensures smooth acceleration to set speed
-    # when the leads are no factor.
     v_lower = v_ego + (T_IDXS * self.cruise_min_a * 1.05)
     v_upper = v_ego + (T_IDXS * self.cruise_max_a * 1.05)
     v_cruise_clipped = np.clip(v_cruise * np.ones(N+1),
@@ -405,25 +402,43 @@ class LongitudinalMpc:
                                v_upper)
     cruise_obstacle = np.cumsum(T_DIFFS * v_cruise_clipped) + get_safe_obstacle_distance(v_cruise_clipped, self.desired_TR)
 
-    if 0.5 < carstate.radarDistance < 150:
+
+    if self.status:
+      self.e2e = False
       x_obstacles = np.column_stack([lead_0_obstacle, lead_1_obstacle, cruise_obstacle])
+      self.source = SOURCES[np.argmin(x_obstacles[12])]
+      self.params[:,2] = np.min(x_obstacles, axis=1)
+      self.cruise_target = cruise_obstacle[:]
     elif x[12] < 100 and stopline[12] < 100:
-      x = np.ones(13) * x[12]
-      x_obstacles = np.column_stack([lead_0_obstacle, lead_1_obstacle, cruise_obstacle*2, (stopline+x)/2])
+      self.e2e = True
+      cruise_target = T_IDXS * v_cruise + x[0]
+      x_targets = np.column_stack([lead_0_obstacle - (3/4) * get_safe_obstacle_distance(v),
+                                   lead_1_obstacle - (3/4) * get_safe_obstacle_distance(v),
+                                   cruise_target, x])
+      self.source = SOURCES[np.argmin(x_targets[12])]
+      self.params[:,2] = 1e3
+      self.cruise_target = cruise_target[:]
     else:
+      self.e2e = False
       x_obstacles = np.column_stack([lead_0_obstacle, lead_1_obstacle, cruise_obstacle])
+      self.source = SOURCES[np.argmin(x_obstacles[12])]
+      self.params[:,2] = np.min(x_obstacles, axis=1)
+      self.cruise_target = cruise_obstacle[:]
     
-    self.source = SOURCES[np.argmin(x_obstacles[12])]
-    self.params[:,2] = np.min(x_obstacles, axis=1)
     self.params[:,3] = np.copy(self.prev_a)
     self.params[:,4] = self.desired_TR  # shane
 
     self.e2e_x = x[:]
     self.lead_0_obstacle = lead_0_obstacle[:]
     self.lead_1_obstacle = lead_1_obstacle[:]
-    self.cruise_target = cruise_obstacle[:]
     self.stopline = stopline[:]
     self.stop_prob = model.stopLine.prob
+
+    if self.e2e:
+      self.yref[:,1] = np.min(x_targets, axis=1)
+      for i in range(N):
+        self.solver.set(i, "yref", self.yref[i])
+      self.solver.set(N, "yref", self.yref[N][:COST_E_DIM])
 
     self.run()
     if (np.any(lead_xv_0[:,0] - self.x_sol[:,0] < CRASH_DISTANCE) and
