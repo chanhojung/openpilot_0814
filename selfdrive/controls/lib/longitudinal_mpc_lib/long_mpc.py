@@ -229,6 +229,8 @@ class LongitudinalMpc:
     self.stopline = np.zeros(13, dtype=np.float64)
     self.stop_prob = 0.0
 
+    self.on_stopping = False
+
   def reset(self):
     # self.solver = AcadosOcpSolverCython(MODEL_NAME, ACADOS_SOLVER_TYPE, N)
     self.solver.reset()
@@ -350,6 +352,7 @@ class LongitudinalMpc:
     self.lo_timer += 1
     if self.lo_timer > 200:
       self.lo_timer = 0
+      self.e2e = Params().get_bool("E2ELong")
       self.dynamic_TR_mode = int(Params().get("DynamicTRGap", encoding="utf8"))
       self.custom_tr_enabled = Params().get_bool("CustomTREnabled")
 
@@ -391,10 +394,6 @@ class LongitudinalMpc:
     lead_0_obstacle = lead_xv_0[:,0] + get_stopped_equivalence_factor(lead_xv_0[:,1])
     lead_1_obstacle = lead_xv_1[:,0] + get_stopped_equivalence_factor(lead_xv_1[:,1])
 
-    stopline = (model.stopLine.x + 6.0) * np.ones(N+1) if stopping else 400 * np.ones(N+1)
-    if stopline[12] < 1.0:
-      stopline = np.ones(13)
-
     v_lower = v_ego + (T_IDXS * self.cruise_min_a * 1.05)
     v_upper = v_ego + (T_IDXS * self.cruise_max_a * 1.05)
     v_cruise_clipped = np.clip(v_cruise * np.ones(N+1),
@@ -402,40 +401,35 @@ class LongitudinalMpc:
                                v_upper)
     cruise_obstacle = np.cumsum(T_DIFFS * v_cruise_clipped) + get_safe_obstacle_distance(v_cruise_clipped, self.desired_TR)
 
+    stopline = (model.stopLine.x + 5.0) * np.ones(N+1) if stopping else 400 * np.ones(N+1)
+    x = (x[N] + 5.0) * np.ones(N+1)
 
-    if self.status:
-      self.e2e = False
+    if self.status and not self.on_stopping:
       x_obstacles = np.column_stack([lead_0_obstacle, lead_1_obstacle, cruise_obstacle])
-      self.source = SOURCES[np.argmin(x_obstacles[12])]
-      self.params[:,2] = np.min(x_obstacles, axis=1)
-      self.cruise_target = cruise_obstacle[:]
-    elif x[12] < 100 and stopline[12] < 100:
-      self.e2e = True
-      cruise_target = T_IDXS * v_cruise + x[0]
-      x_targets = np.column_stack([lead_0_obstacle - (3/4) * get_safe_obstacle_distance(v),
-                                   lead_1_obstacle - (3/4) * get_safe_obstacle_distance(v),
-                                   cruise_target, x])
-      self.source = SOURCES[np.argmin(x_targets[12])]
-      self.params[:,2] = 1e3
-      self.cruise_target = cruise_target[:]
+    elif x[N] > 30 and stopline[N] < 30 and self.v_ego < 6.0:
+      self.on_stopping = False
+      x_obstacles = np.column_stack([lead_0_obstacle, lead_1_obstacle, cruise_obstacle, x])
+    elif x[N] < 100 and stopline[N] < 100:
+      self.on_stopping = True
+      x_obstacles = np.column_stack([lead_0_obstacle, lead_1_obstacle, cruise_obstacle*2, (stopline+x)/2])
     else:
-      self.e2e = False
+      self.on_stopping = False
       x_obstacles = np.column_stack([lead_0_obstacle, lead_1_obstacle, cruise_obstacle])
-      self.source = SOURCES[np.argmin(x_obstacles[12])]
-      self.params[:,2] = np.min(x_obstacles, axis=1)
-      self.cruise_target = cruise_obstacle[:]
-    
+
+    self.source = SOURCES[np.argmin(x_obstacles[N])]
+    self.params[:,2] = np.min(x_obstacles, axis=1)
     self.params[:,3] = np.copy(self.prev_a)
     self.params[:,4] = self.desired_TR  # shane
 
     self.e2e_x = x[:]
     self.lead_0_obstacle = lead_0_obstacle[:]
     self.lead_1_obstacle = lead_1_obstacle[:]
+    self.cruise_target = cruise_obstacle[:]
     self.stopline = stopline[:]
     self.stop_prob = model.stopLine.prob
 
     if self.e2e:
-      self.yref[:,1] = np.min(x_targets, axis=1)
+      self.yref[:,1] = np.min(x_obstacles, axis=1)
       for i in range(N):
         self.solver.set(i, "yref", self.yref[i])
       self.solver.set(N, "yref", self.yref[N][:COST_E_DIM])

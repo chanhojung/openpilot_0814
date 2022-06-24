@@ -160,23 +160,23 @@ static void draw_lead(UIState *s, const cereal::RadarState::LeadData::Reader &le
 }
 
 static void ui_draw_stop_line(UIState *s, const cereal::ModelDataV2::StopLineData::Reader &stop_line_data, const line_vertices_data &vd) {
-  NVGcolor color = nvgRGBAf(1.0, 0.0, 0.0, stop_line_data.getProb());
+  NVGcolor color = nvgRGBAf(0.7, 0.0, 0.0, stop_line_data.getProb());
   ui_draw_line(s, vd, &color, nullptr);
 }
 
 static void ui_draw_stop_sign(UIState *s) {
   float center_x = 1400.0f;
-  float center_y = 100.0f;
+  float center_y = 105.0f;
   float radius_i = 5.0f;
   float radius_o = 75.0f;
 
-  if (s->scene.longitudinalPlan.e2ex[12] > 50 && s->scene.longitudinalPlan.stopline[12] < 10 && s->scene.radarDistance > 149 ) {
+  if (s->scene.longitudinalPlan.e2ex[12] > 30 && s->scene.longitudinalPlan.stopline[12] < 10 && s->scene.car_state.getVEgo() < 0.5) {
     nvgBeginPath(s->vg);
     nvgCircle(s->vg, center_x, center_y, radius_i+radius_o);
     NVGpaint stop_sign = nvgRadialGradient(s->vg, center_x, center_y, radius_i, radius_o, nvgRGBAf(0.0, 1.0, 0.0, 0.9), nvgRGBAf(0.0, 0.0, 0.0, 0.3));
     nvgFillPaint(s->vg, stop_sign);
     nvgFill(s->vg);
-  } else if (s->scene.longitudinalPlan.e2ex[12] < 100 && s->scene.longitudinalPlan.stopline[12] < 100 && s->scene.radarDistance > 149 ) {
+  } else if (s->scene.longitudinalPlan.e2ex[12] < 100 && s->scene.longitudinalPlan.stopline[12] < 100) {
     nvgBeginPath(s->vg);
     nvgCircle(s->vg, center_x, center_y, radius_i+radius_o);
     NVGpaint stop_sign = nvgRadialGradient(s->vg, center_x, center_y, radius_i, radius_o, nvgRGBAf(1.0, 0.0, 0.0, 0.9), nvgRGBAf(0.0, 0.0, 0.0, 0.3));
@@ -280,7 +280,7 @@ static void ui_draw_world(UIState *s) {
     if (lead_two.getStatus() && (std::abs(lead_one.getDRel() - lead_two.getDRel()) > 3.0)) {
       draw_lead(s, lead_two, s->scene.lead_vertices[1]);
     }
-    if (s->scene.stop_line) {
+    if (s->scene.stop_line && s->scene.longitudinalPlan.stopline[12] > 3.0) {
       auto stop_line = (*s->sm)["modelV2"].getModelV2().getStopLine();
       if (stop_line.getProb() > .5) {
         ui_draw_stop_line(s, stop_line, s->scene.stop_line_vertices);
@@ -1138,10 +1138,15 @@ static void bb_ui_draw_measures_right(UIState *s, int bb_x, int bb_y, int bb_w )
   if (0 < scene.gear_step && scene.gear_step < 9) {
     //char val_str[16];
     //char uom_str[6];
-    std::string trans_gear_val = "D " + std::to_string(int(scene.gear_step));
+    std::string main_val = "";
+    if (scene.charge_meter > 0) {
+      main_val = std::to_string(int(scene.charge_meter)) + "%";  
+    } else {
+      main_val = "S " + std::to_string(int(scene.gear_step));
+    }
     std::string gap = "";
-    NVGcolor val_color = COLOR_YELLOW_ALPHA(200);
-    NVGcolor uom_color2 = COLOR_BLUE_ALPHA(200);
+    NVGcolor val_color = COLOR_YELLOW_ALPHA(230);
+    NVGcolor uom_color2 = COLOR_WHITE_ALPHA(200);
     if (scene.cruise_gap == 1) {
       uom_color2 = COLOR_RED_ALPHA(240);
       gap = "■";
@@ -1154,7 +1159,7 @@ static void bb_ui_draw_measures_right(UIState *s, int bb_x, int bb_y, int bb_w )
     } else {
       gap = "■■■■";
     }
-    bb_ry +=bb_ui_draw_measure(s, trans_gear_val.c_str(), gap.c_str(), "GEAR",
+    bb_ry +=bb_ui_draw_measure(s, main_val.c_str(), gap.c_str(), scene.charge_meter>0?"MAIN BAT":"GEAR",
         bb_rx, bb_ry, bb_uom_dx,
         val_color, lab_color, uom_color2,
         value_fontSize, label_fontSize, uom_fontSize, 2);

@@ -1,5 +1,9 @@
 ☞ Use two fingers to scroll down ☜
 
+2022-06-21
+- Add EV Car Main Battery Level
+- Add Arabic Language to device
+- Show traffic signal from model
 2022-06-18
 - Rocket league model
 2022-06-09

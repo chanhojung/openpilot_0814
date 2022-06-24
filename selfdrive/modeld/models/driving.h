@@ -99,6 +99,7 @@ struct ModelOutputLinesProb {
 };
 static_assert(sizeof(ModelOutputLinesProb) == sizeof(ModelOutputLineProbVal)*4);
 
+
 struct ModelOutputLaneLines {
   ModelOutputLinesXY mean;
   ModelOutputLinesXY std;
@@ -245,7 +246,7 @@ struct ModelOutput {
 
 constexpr int OUTPUT_SIZE = sizeof(ModelOutput) / sizeof(float);
 #ifdef TEMPORAL
-  constexpr int TEMPORAL_SIZE = 512+256;
+  constexpr int TEMPORAL_SIZE = 512;
 #else
   constexpr int TEMPORAL_SIZE = 0;
 #endif
